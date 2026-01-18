@@ -31,6 +31,7 @@ const updateProfileValidation = [
 // Public routes
 router.get("/:id", userController.getUserById);
 router.get("/:id/events", userController.getUserEvents);
+router.get("/:id/groups", userController.getUserGroups);
 router.get("/search", userController.searchUsers);
 
 // Protected routes (require authentication)
