@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
+import RecommendationSection from '../components/recommendations/RecommendationSection';
 import api from '../services/api';
 import { format } from 'date-fns';
 
@@ -137,28 +138,7 @@ const Dashboard = () => {
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Recommended for You</h2>
-          {feedEvents.length === 0 ? (
-            <p className="text-gray-500">No recommendations at this time</p>
-          ) : (
-            <div className="space-y-4">
-              {feedEvents.map((event) => (
-                <Link
-                  key={event._id}
-                  to={`/events/${event._id}`}
-                  className="block bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                  <p className="text-gray-600 text-sm">
-                    {format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {event.eventCategory} • {event.attendees?.length || 0} attendees
-                  </p>
-                </Link>
-              ))}
-            </div>
-          )}
+          <RecommendationSection limit={5} />
         </div>
       </div>
     </div>
