@@ -239,7 +239,10 @@ const updateEvent = async (eventId, updateData, userId) => {
 
 // Delete event
 const deleteEvent = async (eventId, userId) => {
-  const event = await Event.findById(eventId);
+  const notificationService = require("./notification.service");
+  const emailService = require("./email.service");
+  
+  const event = await Event.findById(eventId).populate("attendees", "email name username");
   
   if (!event) {
     throw new Error("Event not found");
@@ -247,6 +250,38 @@ const deleteEvent = async (eventId, userId) => {
   
   if (event.hostedBy.toString() !== userId.toString()) {
     throw new Error("You don't have permission to delete this event");
+  }
+  
+  // Notify attendees before deleting
+  if (event.attendees && event.attendees.length > 0) {
+    try {
+      const notificationPromises = event.attendees.map(attendee => {
+        const attendeeId = typeof attendee === 'object' ? attendee._id : attendee;
+        return notificationService.createNotification(
+          attendeeId,
+          "event_cancellation",
+          "Event Cancelled",
+          `The event "${event.title}" has been cancelled`,
+          { eventId: event._id, eventTitle: event.title }
+        );
+      });
+      
+      await Promise.all(notificationPromises);
+      
+      // Send cancellation emails
+      const emailPromises = event.attendees
+        .filter(attendee => attendee && attendee.email)
+        .map(attendee =>
+          emailService.sendEventCancellation(
+            attendee.email,
+            attendee.name || attendee.username,
+            event.title
+          )
+        );
+      await Promise.all(emailPromises);
+    } catch (error) {
+      console.error("Failed to notify attendees of cancellation:", error);
+    }
   }
   
   await Event.findByIdAndDelete(eventId);
