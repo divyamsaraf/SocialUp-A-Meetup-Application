@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
 import PrivateRoute from './components/common/PrivateRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -18,9 +19,10 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
           <Navbar />
-          <Routes>
+          <main className="flex-grow">
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -68,7 +70,9 @@ function App() {
               }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </main>
+          <Footer />
         </div>
       </Router>
     </AuthProvider>

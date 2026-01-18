@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { EVENT_CATEGORIES } from '../utils/constants';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
@@ -35,6 +36,23 @@ const Home = () => {
                 </Link>
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
+            Popular Categories
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {EVENT_CATEGORIES.slice(0, 6).map((category) => (
+              <Link
+                key={category}
+                to={`/events?category=${encodeURIComponent(category)}`}
+                className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-shadow"
+              >
+                <span className="text-gray-700 font-medium">{category}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

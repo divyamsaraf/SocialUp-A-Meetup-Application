@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/Loading';
+import ErrorMessage from '../components/common/ErrorMessage';
 import api from '../services/api';
+import { format } from 'date-fns';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -9,6 +12,7 @@ const Dashboard = () => {
   const [feedEvents, setFeedEvents] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -22,8 +26,9 @@ const Dashboard = () => {
         setUpcomingEvents(upcomingRes.data.data.events || []);
         setFeedEvents(feedRes.data.data.events || []);
         setStats(statsRes.data.data.stats || null);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load dashboard data');
+        console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);
       }
@@ -41,6 +46,8 @@ const Dashboard = () => {
       <h1 className="text-3xl font-bold text-gray-900 mb-6">
         Welcome back, {user?.name || user?.username}!
       </h1>
+
+      {error && <ErrorMessage message={error} onClose={() => setError('')} />}
 
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -111,12 +118,19 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {upcomingEvents.map((event) => (
-                <div key={event._id} className="bg-white shadow rounded-lg p-4">
-                  <h3 className="text-lg font-semibold">{event.title}</h3>
+                <Link
+                  key={event._id}
+                  to={`/events/${event._id}`}
+                  className="block bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
                   <p className="text-gray-600 text-sm">
-                    {new Date(event.dateAndTime).toLocaleDateString()}
+                    {format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}
                   </p>
-                </div>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {event.eventCategory} • {event.attendees?.length || 0} attendees
+                  </p>
+                </Link>
               ))}
             </div>
           )}
@@ -129,12 +143,19 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {feedEvents.map((event) => (
-                <div key={event._id} className="bg-white shadow rounded-lg p-4">
-                  <h3 className="text-lg font-semibold">{event.title}</h3>
+                <Link
+                  key={event._id}
+                  to={`/events/${event._id}`}
+                  className="block bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
                   <p className="text-gray-600 text-sm">
-                    {new Date(event.dateAndTime).toLocaleDateString()}
+                    {format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}
                   </p>
-                </div>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {event.eventCategory} • {event.attendees?.length || 0} attendees
+                  </p>
+                </Link>
               ))}
             </div>
           )}

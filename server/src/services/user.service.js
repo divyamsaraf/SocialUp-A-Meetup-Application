@@ -42,18 +42,12 @@ const updatePassword = async (userId, newPassword) => {
 
 // Get user's created events
 const getUserEvents = async (userId) => {
-  const user = await User.findById(userId).populate({
-    path: "events",
-    select: "title dateAndTime eventCategory eventLocationType attendees eventStatus",
-  });
+  const Event = require("../models/event.model");
+  const events = await Event.find({ hostedBy: userId })
+    .select("title dateAndTime eventCategory eventLocationType attendees eventStatus eventImage")
+    .sort({ dateAndTime: -1 });
   
-  if (!user) {
-    throw new Error("User not found");
-  }
-  
-  // This will need to be populated from Event model
-  // For now, return empty array
-  return [];
+  return events;
 };
 
 // Search users
