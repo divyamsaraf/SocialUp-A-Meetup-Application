@@ -43,3 +43,10 @@ coverage/
 # Misc
 *.pem
 *.key
+
+# Documentation files (phase reports, guides, etc.)
+PHASE_*.md
+ANALYSIS_REPORT.md
+VERIFICATION_REPORT.md
+COMPLETION_SUMMARY.md
+TESTING_CHECKLIST.md
