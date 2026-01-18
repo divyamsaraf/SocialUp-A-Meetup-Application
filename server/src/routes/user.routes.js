@@ -28,7 +28,12 @@ const updateProfileValidation = [
   validate,
 ];
 
-// All routes require authentication
+// Public routes
+router.get("/:id", userController.getUserById);
+router.get("/:id/events", userController.getUserEvents);
+router.get("/search", userController.searchUsers);
+
+// Protected routes (require authentication)
 router.use(authenticate);
 
 // Get current user profile
@@ -43,14 +48,5 @@ router.post(
   userController.upload.single("avatar"),
   userController.uploadAvatar
 );
-
-// Get user by ID (public)
-router.get("/:id", userController.getUserById);
-
-// Get user's events
-router.get("/:id/events", userController.getUserEvents);
-
-// Search users
-router.get("/search", userController.searchUsers);
 
 module.exports = router;

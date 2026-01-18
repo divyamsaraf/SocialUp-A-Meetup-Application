@@ -34,6 +34,7 @@ if (env.NODE_ENV === "development") {
 
 // Serve static files (uploaded images)
 app.use("/images", express.static(path.join(__dirname, "images")));
+app.use("/images/uploads", express.static(path.join(__dirname, "images", "uploads")));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
