@@ -133,6 +133,19 @@ const searchUsers = async (req, res, next) => {
   }
 };
 
+// Get user's groups
+const getUserGroups = async (req, res, next) => {
+  try {
+    const groups = await userService.getUserGroups(req.params.id);
+    res.status(200).json({
+      status: "success",
+      data: { groups },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getMyProfile,
   updateMyProfile,
@@ -140,5 +153,6 @@ module.exports = {
   getUserById,
   getUserEvents,
   searchUsers,
+  getUserGroups,
   upload, // Export multer upload middleware
 };

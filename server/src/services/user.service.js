@@ -67,10 +67,26 @@ const searchUsers = async (query, limit = 20) => {
   return users.map((user) => user.toJSON());
 };
 
+// Get user's groups
+const getUserGroups = async (userId) => {
+  const Group = require("../models/group.model");
+  const groups = await Group.find({
+    $or: [
+      { organizer: userId },
+      { members: userId },
+    ],
+  })
+    .populate("organizer", "name username profile_pic")
+    .sort({ createdAt: -1 });
+  
+  return groups;
+};
+
 module.exports = {
   getUserById,
   updateProfile,
   updatePassword,
   getUserEvents,
   searchUsers,
+  getUserGroups,
 };

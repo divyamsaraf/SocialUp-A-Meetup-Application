@@ -25,6 +25,12 @@ const Navbar = () => {
               >
                 Events
               </Link>
+              <Link
+                to="/groups"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                Groups
+              </Link>
               {isAuthenticated && (
                 <>
                   <Link
@@ -38,6 +44,12 @@ const Navbar = () => {
                     className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                   >
                     Create Event
+                  </Link>
+                  <Link
+                    to="/groups/create"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    Create Group
                   </Link>
                   {user?.role === 'admin' && (
                     <Link

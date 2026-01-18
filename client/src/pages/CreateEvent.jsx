@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { eventService } from '../services/event.service';
+import { groupService } from '../services/group.service';
 import { EVENT_CATEGORIES, EVENT_LOCATION_TYPES } from '../utils/constants';
 import ErrorMessage from '../components/common/ErrorMessage';
 import PrivateRoute from '../components/common/PrivateRoute';
@@ -10,6 +11,8 @@ const CreateEvent = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userGroups, setUserGroups] = useState([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
   const {
     register,
     handleSubmit,
@@ -18,13 +21,31 @@ const CreateEvent = () => {
   } = useForm();
 
   const eventLocationType = watch('eventLocationType');
+  const selectedGroupId = watch('groupId');
   const isInPerson = eventLocationType === EVENT_LOCATION_TYPES.IN_PERSON;
+
+  useEffect(() => {
+    fetchUserGroups();
+  }, []);
+
+  const fetchUserGroups = async () => {
+    try {
+      setLoadingGroups(true);
+      const response = await groupService.getGroups({}, 1, 100);
+      setUserGroups(response.data.groups || []);
+    } catch (err) {
+      console.error('Failed to load groups:', err);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     setError('');
     setLoading(true);
 
     try {
+      const selectedGroup = userGroups.find(g => g._id === data.groupId);
       const eventData = {
         title: data.title,
         description: data.description,
@@ -39,6 +60,12 @@ const CreateEvent = () => {
             city: data.city || '',
             state: data.state || '',
             zipCode: data.zipCode || '',
+          },
+        }),
+        ...(data.groupId && selectedGroup && {
+          groupDetail: {
+            groupId: data.groupId,
+            groupName: selectedGroup.name,
           },
         }),
       };
@@ -211,6 +238,30 @@ const CreateEvent = () => {
               {errors.maxAttendees && (
                 <p className="mt-1 text-sm text-red-600">{errors.maxAttendees.message}</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Group (optional)
+              </label>
+              {loadingGroups ? (
+                <p className="text-sm text-gray-500">Loading groups...</p>
+              ) : (
+                <select
+                  {...register('groupId')}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">No group (standalone event)</option>
+                  {userGroups.map((group) => (
+                    <option key={group._id} value={group._id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Associate this event with a group (optional)
+              </p>
             </div>
           </div>
 

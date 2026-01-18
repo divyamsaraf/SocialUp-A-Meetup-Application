@@ -14,6 +14,9 @@ import EditEvent from './pages/EditEvent';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import AdminPanel from './pages/AdminPanel';
+import GroupList from './pages/GroupList';
+import GroupDetails from './pages/GroupDetails';
+import CreateGroup from './pages/CreateGroup';
 
 function App() {
   return (
@@ -66,6 +69,16 @@ function App() {
               element={
                 <PrivateRoute>
                   <AdminPanel />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/groups" element={<GroupList />} />
+            <Route path="/groups/:id" element={<GroupDetails />} />
+            <Route
+              path="/groups/create"
+              element={
+                <PrivateRoute>
+                  <CreateGroup />
                 </PrivateRoute>
               }
             />
