@@ -1,68 +1,144 @@
-const User = require("../models/user.model");
-var jwt = require("jsonwebtoken");
-require("dotenv").config();
+const userService = require("../services/user.service");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
-const newToken = (user) => {
-  return jwt.sign({ user: user }, "som");
-};
-
-const register = async (req, res) => {
-  try {
-    //first check if a user with that email already exist
-    let user = await User.findOne({ email: req.body.email }).lean().exec();
-
-    //if user exists then throw an error
-    if (user) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "user already exists" });
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "../images/uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "profile-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
 
-    //otherwise create user and then hash the password
-
-    user = await User.create(req.body);
-
-    //create a token
-    const token = newToken(user);
-
-    //then we need to return the token and user information to frontend
-
-    return res.status(201).json({ user: user, token: token });
-  } catch (err) {
-    return res.status(500).json({ err });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+  
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed"));
   }
 };
 
-const login = async (req, res) => {
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter,
+});
+
+// Get current user profile
+const getMyProfile = async (req, res, next) => {
   try {
-    //first check if a user exists with that email already
-    let user = await User.findOne({ email: req.body.email }).exec();
-    // return res.send(user)
-
-    //if not throw an error
-    if (!user) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "user does not exist plz register" });
-    }
-    //if user exist then match with the password
-    const match = user.checkPassword(req.body.password);
-
-    //if not match throw an error
-    if (!match) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "password not match" });
-    }
-
-    //if match then create a token
-    const token = newToken(user);
-
-    //return the token to the front end
-    return res.status(200).json({ user: user, token: token });
-  } catch (err) {
-    return res.status(500).json({ err });
+    const user = await userService.getUserById(req.user._id);
+    res.status(200).json({
+      status: "success",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-module.exports = { register, login };
+// Update current user profile
+const updateMyProfile = async (req, res, next) => {
+  try {
+    const user = await userService.updateProfile(req.user._id, req.body);
+    res.status(200).json({
+      status: "success",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Upload profile picture
+const uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        status: "error",
+        message: "No file uploaded",
+      });
+    }
+
+    const profilePicUrl = `/images/uploads/${req.file.filename}`;
+    const user = await userService.updateProfile(req.user._id, {
+      profile_pic: profilePicUrl,
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get user by ID
+const getUserById = async (req, res, next) => {
+  try {
+    const user = await userService.getUserById(req.params.id);
+    res.status(200).json({
+      status: "success",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get user's events
+const getUserEvents = async (req, res, next) => {
+  try {
+    const events = await userService.getUserEvents(req.params.id);
+    res.status(200).json({
+      status: "success",
+      data: { events },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Search users
+const searchUsers = async (req, res, next) => {
+  try {
+    const { q, limit } = req.query;
+    if (!q) {
+      return res.status(400).json({
+        status: "error",
+        message: "Search query is required",
+      });
+    }
+
+    const users = await userService.searchUsers(q, parseInt(limit) || 20);
+    res.status(200).json({
+      status: "success",
+      data: { users },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getMyProfile,
+  updateMyProfile,
+  uploadAvatar,
+  getUserById,
+  getUserEvents,
+  searchUsers,
+  upload, // Export multer upload middleware
+};

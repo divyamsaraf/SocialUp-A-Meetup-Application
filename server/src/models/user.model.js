@@ -1,20 +1,40 @@
 const mongoose = require("mongoose");
-var bcrypt = require("bcryptjs");
-const path = require("path");
-// const x= path.join(__dirname);
-const y = path.resolve("src", "images", "https://img.icons8.com/ios-filled/50/000000/user-male-circle.png");
-// console.log(x,y)
+const bcrypt = require("bcryptjs");
+const { USER_ROLES } = require("../config/constants");
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    location: { type: String },
-    interest: { type: Array, default: [] },
-    profile_pic: { type: String, default: y },
-    name: { type: String },
-    // events:[{type: Schema.Types.ObjectId, ref: 'Ingredient'}]
+    username: { type: String, trim: true },
+    email: { 
+      type: String, 
+      required: [true, "Email is required"], 
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
+    },
+    password: { 
+      type: String, 
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
+      select: false, // Don't return password by default
+    },
+    name: { type: String, trim: true },
+    location: { type: String, trim: true },
+    interests: { 
+      type: [String], 
+      default: [] 
+    },
+    profile_pic: { 
+      type: String, 
+      default: "https://img.icons8.com/ios-filled/50/000000/user-male-circle.png" 
+    },
+    bio: { type: String, maxlength: [500, "Bio must be less than 500 characters"] },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.USER,
+    },
   },
   {
     versionKey: false,
@@ -22,29 +42,26 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-//it will bycript the password when user register and update
-// it happns before the user get saved
-// next is the middleware and pre is the hook
-
+// Hash password before saving
 userSchema.pre("save", function (next) {
   if (!this.isModified("password")) return next();
-
-  var hash = bcrypt.hashSync(this.password, 8);
+  
+  const hash = bcrypt.hashSync(this.password, 8);
   this.password = hash;
   return next();
 });
 
+// Method to check password
 userSchema.methods.checkPassword = function (password) {
   return bcrypt.compareSync(password, this.password);
 };
 
+// Method to exclude password from JSON
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
+
 const User = mongoose.model("user", userSchema);
 module.exports = User;
-
-// username:
-// email:
-// password:
-// intrest:
-// location:
-// events:{type:Array,defult[]};
-// groups:[]

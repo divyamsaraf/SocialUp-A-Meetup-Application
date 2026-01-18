@@ -1,9 +1,9 @@
-require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const env = require("../config/env");
 
 const verifyToken = (token) => {
   return new Promise((resolve, reject) => {
-    jwt.verify(token, "som", function (err, user) {
+    jwt.verify(token, env.JWT_SECRET, function (err, user) {
       if (err) return reject(err);
       return resolve(user);
     });
@@ -46,9 +46,10 @@ const authenticate = async (req, res, next) => {
     //return next
     return next();
   } catch (err) {
-    return res
-      .status(400)
-      .json({ status: "you are not sending correct token" });
+    return res.status(401).json({
+      status: "error",
+      message: "Invalid or expired token",
+    });
   }
 };
 
