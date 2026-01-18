@@ -12,6 +12,7 @@ import CreateEvent from './pages/CreateEvent';
 import EditEvent from './pages/EditEvent';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   return (
@@ -55,6 +56,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <EditProfile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminPanel />
                 </PrivateRoute>
               }
             />

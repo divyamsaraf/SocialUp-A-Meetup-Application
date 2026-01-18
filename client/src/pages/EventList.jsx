@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import EventList from '../components/events/EventList';
+import EventListComponent from '../components/events/EventList';
 import EventCard from '../components/events/EventCard';
 import FilterBar from '../components/events/FilterBar';
+import MapComponent from '../components/maps/MapComponent';
 import { eventService } from '../services/event.service';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -17,6 +18,7 @@ const EventListPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('list');
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -48,10 +50,6 @@ const EventListPage = () => {
     setSearchParams(params);
   };
 
-  const activeFilters = searchQuery
-    ? { ...filters, searchQuery }
-    : filters;
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Events</h1>
@@ -77,15 +75,93 @@ const EventListPage = () => {
 
       {error && <ErrorMessage message={error} />}
 
-      <FilterBar onFilterChange={handleFilterChange} currentFilters={filters} />
+      <div className="mb-4 flex justify-between items-center">
+        <div className="flex-1">
+          <FilterBar onFilterChange={handleFilterChange} currentFilters={filters} />
+        </div>
+        <div className="flex space-x-2 ml-4">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-4 py-2 rounded-md ${
+              viewMode === 'list'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            List
+          </button>
+          <button
+            onClick={() => setViewMode('map')}
+            className={`px-4 py-2 rounded-md ${
+              viewMode === 'map'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Map
+          </button>
+        </div>
+      </div>
 
-      {searchQuery ? (
+      {viewMode === 'map' ? (
+        <EventMapView filters={filters} searchQuery={searchQuery} />
+      ) : searchQuery ? (
         <SearchResults query={searchQuery} filters={filters} />
       ) : (
-        <EventList filters={filters} />
+        <EventListComponent filters={filters} />
       )}
     </div>
   );
+};
+
+const EventMapView = ({ filters, searchQuery }) => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchEvents();
+  }, [filters, searchQuery]);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      let response;
+      if (searchQuery) {
+        response = await eventService.searchEvents(searchQuery, filters, 1, 100);
+      } else {
+        response = await eventService.getEvents(filters, 1, 100);
+      }
+      const eventList = response.data.events || [];
+      const inPersonEvents = eventList.filter(
+        (e) => e.eventLocationType === 'in-person' && e.location?.coordinates
+      );
+      setEvents(inPersonEvents);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load events');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No events with location data found</p>
+      </div>
+    );
+  }
+
+  return <MapComponent events={events} />;
 };
 
 const SearchResults = ({ query, filters }) => {

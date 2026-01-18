@@ -6,6 +6,7 @@ import { eventService } from '../services/event.service';
 import { commentService } from '../services/comment.service';
 import RSVPButton from '../components/events/RSVPButton';
 import CommentSection from '../components/comments/CommentSection';
+import MapComponent from '../components/maps/MapComponent';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 
@@ -121,12 +122,22 @@ const EventDetails = () => {
           {event.location && event.eventLocationType === 'in-person' && (
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-2">Location</h2>
-              <p className="text-gray-700">
+              <p className="text-gray-700 mb-4">
                 {event.location.address && <>{event.location.address}<br /></>}
                 {event.location.city && <>{event.location.city}</>}
                 {event.location.state && <>, {event.location.state}</>}
                 {event.location.zipCode && <> {event.location.zipCode}</>}
               </p>
+              {event.location.coordinates?.lat && event.location.coordinates?.lng && (
+                <MapComponent
+                  events={[event]}
+                  center={{
+                    lat: event.location.coordinates.lat,
+                    lng: event.location.coordinates.lng,
+                  }}
+                  zoom={15}
+                />
+              )}
             </div>
           )}
 
