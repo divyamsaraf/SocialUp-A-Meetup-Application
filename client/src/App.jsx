@@ -1,0 +1,69 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import Navbar from './components/common/Navbar';
+import PrivateRoute from './components/common/PrivateRoute';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import EventList from './pages/EventList';
+import EventDetails from './pages/EventDetails';
+import CreateEvent from './pages/CreateEvent';
+import EditEvent from './pages/EditEvent';
+import Profile from './pages/Profile';
+import EditProfile from './pages/EditProfile';
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/events" element={<EventList />} />
+            <Route path="/events/:id" element={<EventDetails />} />
+            <Route
+              path="/events/create"
+              element={
+                <PrivateRoute>
+                  <CreateEvent />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/events/:id/edit"
+              element={
+                <PrivateRoute>
+                  <EditEvent />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route
+              path="/profile/:id/edit"
+              element={
+                <PrivateRoute>
+                  <EditProfile />
+                </PrivateRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;
