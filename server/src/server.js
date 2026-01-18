@@ -53,12 +53,14 @@ const commentRoutes = require("./routes/comment.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const adminRoutes = require("./routes/admin.routes");
 const groupRoutes = require("./routes/group.routes");
+const notificationRoutes = require("./routes/notification.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/events", commentRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 

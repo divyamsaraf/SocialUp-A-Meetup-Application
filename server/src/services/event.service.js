@@ -3,12 +3,40 @@ const { EVENT_STATUS } = require("../config/constants");
 
 // Create event
 const createEvent = async (eventData, hostId) => {
+  const Group = require("../models/group.model");
+  const notificationService = require("./notification.service");
+  
   const event = await Event.create({
     ...eventData,
     hostedBy: hostId,
   });
   
-  return await Event.findById(event._id).populate("hostedBy", "name username profile_pic");
+  const populatedEvent = await Event.findById(event._id).populate("hostedBy", "name username profile_pic");
+  
+  // If event belongs to a group, notify group members
+  if (eventData.groupDetail && eventData.groupDetail.groupId) {
+    try {
+      const group = await Group.findById(eventData.groupDetail.groupId).populate("members");
+      if (group && group.members) {
+        const notificationPromises = group.members
+          .filter(member => member._id.toString() !== hostId.toString())
+          .map(member =>
+            notificationService.createNotification(
+              member._id,
+              "event_created",
+              "New Event in Group",
+              `A new event "${event.title}" was created in ${group.name}`,
+              { eventId: event._id, eventTitle: event.title, groupId: group._id }
+            )
+          );
+        await Promise.all(notificationPromises);
+      }
+    } catch (error) {
+      console.error("Failed to notify group members:", error);
+    }
+  }
+  
+  return populatedEvent;
 };
 
 // Get event by ID
@@ -138,7 +166,11 @@ const searchEvents = async (searchQuery, filters = {}, page = 1, limit = 20) => 
 
 // Update event
 const updateEvent = async (eventId, updateData, userId) => {
-  const event = await Event.findById(eventId);
+  const notificationService = require("./notification.service");
+  const emailService = require("./email.service");
+  const User = require("../models/user.model");
+  
+  const event = await Event.findById(eventId).populate("attendees");
   
   if (!event) {
     throw new Error("Event not found");
@@ -148,10 +180,61 @@ const updateEvent = async (eventId, updateData, userId) => {
     throw new Error("You don't have permission to update this event");
   }
   
+  const oldData = {
+    title: event.title,
+    dateAndTime: event.dateAndTime,
+    description: event.description,
+  };
+  
   Object.assign(event, updateData);
   await event.save();
   
-  return await getEventById(eventId);
+  const updatedEvent = await getEventById(eventId);
+  
+  // Notify attendees of event update
+  if (event.attendees && event.attendees.length > 0) {
+    try {
+      const changes = {};
+      if (updateData.title && updateData.title !== oldData.title) {
+        changes.title = `${oldData.title} → ${updateData.title}`;
+      }
+      if (updateData.dateAndTime && updateData.dateAndTime !== oldData.dateAndTime) {
+        changes.date = `${oldData.dateAndTime} → ${updateData.dateAndTime}`;
+      }
+      
+      if (Object.keys(changes).length > 0) {
+        const notificationPromises = event.attendees.map(attendee => {
+          const attendeeId = typeof attendee === 'object' ? attendee._id : attendee;
+          return notificationService.createNotification(
+            attendeeId,
+            "event_update",
+            "Event Updated",
+            `The event "${event.title}" has been updated`,
+            { eventId: event._id, eventTitle: event.title, changes }
+          );
+        });
+        
+        await Promise.all(notificationPromises);
+        
+        // Send emails to attendees
+        const emailPromises = event.attendees
+          .filter(attendee => attendee.email)
+          .map(attendee =>
+            emailService.sendEventUpdate(
+              attendee.email,
+              attendee.name || attendee.username,
+              event.title,
+              changes
+            )
+          );
+        await Promise.all(emailPromises);
+      }
+    } catch (error) {
+      console.error("Failed to notify attendees of update:", error);
+    }
+  }
+  
+  return updatedEvent;
 };
 
 // Delete event
@@ -172,7 +255,12 @@ const deleteEvent = async (eventId, userId) => {
 
 // RSVP to event
 const rsvpEvent = async (eventId, userId) => {
-  const event = await Event.findById(eventId);
+  const User = require("../models/user.model");
+  const notificationService = require("./notification.service");
+  const emailService = require("./email.service");
+  
+  const event = await Event.findById(eventId).populate("hostedBy", "name email");
+  const user = await User.findById(userId);
   
   if (!event) {
     throw new Error("Event not found");
@@ -195,6 +283,29 @@ const rsvpEvent = async (eventId, userId) => {
   
   event.attendees.push(userId);
   await event.save();
+  
+  // Send notification and email
+  try {
+    await notificationService.createNotification(
+      userId,
+      "rsvp_confirmation",
+      "RSVP Confirmed",
+      `You've successfully RSVP'd to ${event.title}`,
+      { eventId: event._id, eventTitle: event.title }
+    );
+    
+    if (user && user.email) {
+      await emailService.sendRSVPConfirmation(
+        user.email,
+        user.name || user.username,
+        event.title,
+        event.dateAndTime
+      );
+    }
+  } catch (error) {
+    // Log but don't fail the RSVP if notification fails
+    console.error("Failed to send RSVP notification:", error);
+  }
   
   return await getEventById(eventId);
 };
