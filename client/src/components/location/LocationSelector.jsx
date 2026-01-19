@@ -147,71 +147,67 @@ const LocationSelector = ({
   return (
     <div className={className}>
       <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">📍</span>
-            <div>
-              <div className="text-sm font-semibold text-gray-900">
-                Events near {banner || 'your area'}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-gray-900 mb-2">Events near</div>
+            <div className="relative">
+              <div className="flex gap-2">
+                <span className="flex items-center px-3 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-700">
+                  📍
+                </span>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Enter city or ZIP code"
+                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={requestGeolocation}
+                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  disabled={status === 'loading'}
+                >
+                  {status === 'loading' ? 'Detecting…' : 'Use my location'}
+                </button>
               </div>
-              <div className="text-xs text-gray-600">
-                Type a city or ZIP, or use your location.
-              </div>
+              {suggestions.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
+                  {suggestions.map((s) => {
+                    const label = [s.city, s.state].filter(Boolean).join(', ');
+                    const detail = s.zipCode || s.zip;
+                    return (
+                      <button
+                        key={`${label}-${detail || ''}`}
+                        type="button"
+                        onClick={() => applyTextLocation(detail || label)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between"
+                      >
+                        <span className="text-gray-900">{label || detail}</span>
+                        {s.count != null && (
+                          <span className="text-xs text-gray-500">{s.count} events</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={requestGeolocation}
-              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              disabled={status === 'loading'}
-            >
-              {status === 'loading' ? 'Detecting…' : 'Use my location'}
-            </button>
-            {banner ? (
-              <button
-                type="button"
-                onClick={clearLocation}
-                className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Clear
-              </button>
-            ) : null}
           </div>
         </div>
 
-        <div className="relative">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter city or ZIP code"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          {suggestions.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
-              {suggestions.map((s) => {
-                const label = [s.city, s.state].filter(Boolean).join(', ');
-                const detail = s.zipCode || s.zip;
-                return (
-                  <button
-                    key={`${label}-${detail || ''}`}
-                    type="button"
-                    onClick={() =>
-                      applyTextLocation(detail || label)
-                    }
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between"
-                  >
-                    <span className="text-gray-900">{label || detail}</span>
-                    {s.count != null && (
-                      <span className="text-xs text-gray-500">{s.count} events</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        {banner ? (
+          <div className="text-sm text-gray-700">
+            Showing events near <span className="font-semibold text-gray-900">{banner}</span>
+            <button
+              type="button"
+              onClick={clearLocation}
+              className="ml-2 text-blue-600 hover:text-blue-700"
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
 
         <PopularCities
           cities={popularCities}

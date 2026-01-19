@@ -44,18 +44,18 @@ const HomeEventsPreview = () => {
 
   return (
     <section className="mt-14">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Upcoming events</h2>
-          <p className="text-gray-600">See what’s happening soon—online or in person.</p>
+          <p className="text-gray-600 text-sm">See what’s happening soon—online or in person.</p>
         </div>
         <Link to="/events" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
           View all events
         </Link>
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-3 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible">
+      <div className="space-y-4">
         {events.map((event) => (
-          <div key={event._id} className="min-w-[260px] md:min-w-0">
+          <div key={event._id} className="w-full">
             <EventCard event={event} />
           </div>
         ))}

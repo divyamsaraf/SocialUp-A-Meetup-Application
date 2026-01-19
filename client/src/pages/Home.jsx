@@ -11,16 +11,16 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <HeroSection copy={MESSAGING.hero}>
-          <div className="max-w-2xl mx-auto">
-            <LocationSelector />
-          </div>
-        </HeroSection>
+        <HeroSection copy={MESSAGING.hero} />
+
+        <div className="mt-6">
+          <LocationSelector />
+        </div>
 
         <ValueProps items={MESSAGING.valueProps} />
 
-        <section className="mt-14">
-          <div className="flex items-center justify-between mb-4">
+        <section className="mt-12">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-2xl font-bold text-gray-900">Discover by category</h2>
             <Link to="/events" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
               Browse all events
