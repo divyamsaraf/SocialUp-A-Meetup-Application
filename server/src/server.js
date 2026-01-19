@@ -56,6 +56,7 @@ const groupRoutes = require("./routes/group.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const recommendationRoutes = require("./routes/recommendation.routes");
 const locationRoutes = require("./routes/location.routes");
+const categoryRoutes = require("./routes/category.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -65,6 +66,7 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/locations", locationRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 

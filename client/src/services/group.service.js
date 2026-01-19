@@ -2,18 +2,28 @@ import api from './api';
 
 export const groupService = {
   getGroups: async (filters = {}, page = 1, limit = 20) => {
+    // Clean filters - remove empty values
+    const cleanFilters = {};
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+        cleanFilters[key] = String(filters[key]);
+      }
+    });
+    
     const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
+      page: String(page),
+      limit: String(limit),
+      ...cleanFilters,
     });
     const response = await api.get(`/groups?${params}`);
-    return response.data;
+    // Backend returns { status: "success", data: { groups, pagination } }
+    return response.data.data || response.data;
   },
 
   getGroupById: async (id) => {
     const response = await api.get(`/groups/${id}`);
-    return response.data;
+    // Backend returns { status: "success", data: { group } }
+    return response.data.data || response.data;
   },
 
   createGroup: async (groupData) => {

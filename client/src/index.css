@@ -38,3 +38,13 @@ code {
 .animation-delay-2000 {
   animation-delay: 2s;
 }
+
+/* Hide scrollbar for horizontal scrollable categories */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}

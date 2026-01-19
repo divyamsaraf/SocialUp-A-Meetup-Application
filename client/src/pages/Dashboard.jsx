@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import RecommendationSection from '../components/recommendations/RecommendationSection';
+import LayoutContainer from '../components/common/LayoutContainer';
+import Card from '../components/ui/Card';
 import api from '../services/api';
 import { format } from 'date-fns';
 
@@ -43,111 +45,114 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {user?.name || user?.username}!
-        </h1>
-        <p className="text-gray-700 mt-1">
-          This is your space to turn interests into real connections.
-        </p>
-      </div>
-
-      {error && <ErrorMessage message={error} onClose={() => setError('')} />}
-
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <span className="text-3xl font-bold text-blue-600">
-                    {stats.eventsCreated}
-                  </span>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Events Created
-                    </dt>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <span className="text-3xl font-bold text-green-600">
-                    {stats.eventsRSVPd}
-                  </span>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Events RSVP'd
-                    </dt>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <span className="text-3xl font-bold text-purple-600">
-                    {stats.upcomingRSVPs}
-                  </span>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Upcoming Events
-                    </dt>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Upcoming Events</h2>
-          {upcomingEvents.length === 0 ? (
-            <p className="text-gray-600">
-              No upcoming events yet — find one that matches your interests.
+    <div className="min-h-screen bg-[#f7f7f7]">
+      <LayoutContainer>
+        <div className="pt-6 pb-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome back, {user?.name || user?.username}!
+            </h1>
+            <p className="text-gray-600 text-base">
+              This is your space to turn interests into real connections.
             </p>
-          ) : (
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <Link
-                  key={event._id}
-                  to={`/events/${event._id}`}
-                  className="block bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                  <p className="text-gray-600 text-sm">
-                    {format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {event.eventCategory} • {event.attendees?.length || 0} attendees
-                  </p>
-                </Link>
-              ))}
+          </div>
+
+          {error && (
+            <div className="mb-6">
+              <ErrorMessage message={error} />
             </div>
           )}
-        </div>
 
-        <div>
-          <RecommendationSection limit={5} />
+          {stats && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+              <Card>
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <span className="text-3xl font-bold text-blue-600" aria-label={`${stats.eventsCreated} events created`}>
+                        {stats.eventsCreated}
+                      </span>
+                    </div>
+                    <div className="ml-5 flex-1">
+                      <p className="text-sm font-medium text-gray-600">
+                        Events Created
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card>
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <span className="text-3xl font-bold text-green-600" aria-label={`${stats.eventsRSVPd} events RSVP'd`}>
+                        {stats.eventsRSVPd}
+                      </span>
+                    </div>
+                    <div className="ml-5 flex-1">
+                      <p className="text-sm font-medium text-gray-600">
+                        Events RSVP'd
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card>
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <span className="text-3xl font-bold text-purple-600" aria-label={`${stats.upcomingRSVPs} upcoming events`}>
+                        {stats.upcomingRSVPs}
+                      </span>
+                    </div>
+                    <div className="ml-5 flex-1">
+                      <p className="text-sm font-medium text-gray-600">
+                        Upcoming Events
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming Events</h2>
+              {upcomingEvents.length === 0 ? (
+                <p className="text-gray-600">
+                  No upcoming events yet — find one that matches your interests.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {upcomingEvents.map((event) => (
+                    <Link
+                      key={event._id}
+                      to={`/events/${event._id}`}
+                      className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      aria-label={`View event: ${event.title}`}
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{event.title}</h3>
+                      <p className="text-gray-600 text-sm mb-1">
+                        {format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {event.eventCategory} • {event.attendees?.length || 0} attendees
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <div>
+              <RecommendationSection limit={5} />
+            </div>
+          </div>
         </div>
-      </div>
+      </LayoutContainer>
     </div>
   );
 };

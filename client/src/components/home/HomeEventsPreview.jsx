@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useLocation } from '../../contexts/LocationContext';
 import { eventService } from '../../services/event.service';
@@ -13,15 +13,10 @@ const HomeEventsPreview = ({ onLocationEdit }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!locationLoading) {
-      fetchEvents();
-    }
-  }, [selectedLocation, locationLoading]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const filters = { upcoming: true };
       
       if (selectedLocation) {
@@ -38,13 +33,25 @@ const HomeEventsPreview = ({ onLocationEdit }) => {
       }
       
       const response = await eventService.getEvents(filters, 1, 10);
-      setEvents(response.data.events || []);
+      // Response is already processed by eventService to extract data
+      // Should be { events: [], pagination: {} }
+      const eventList = response?.events || response?.data?.events || [];
+      setEvents(Array.isArray(eventList) ? eventList : []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load events');
+      console.error('Error fetching events:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load events';
+      setError(errorMessage);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    if (!locationLoading) {
+      fetchEvents();
+    }
+  }, [locationLoading, fetchEvents]);
 
   const locationLabel = selectedLocation?.label || 'you';
 

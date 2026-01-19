@@ -3,12 +3,14 @@ import api from './api';
 export const userService = {
   getProfile: async () => {
     const response = await api.get('/users/me');
-    return response.data;
+    // Backend returns { status: "success", data: { user } }
+    return response.data.data || response.data;
   },
 
   updateProfile: async (userData) => {
     const response = await api.put('/users/me', userData);
-    return response.data;
+    // Backend returns { status: "success", data: { user } }
+    return response.data.data || response.data;
   },
 
   uploadAvatar: async (file) => {
@@ -19,17 +21,20 @@ export const userService = {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    // Backend returns { status: "success", data: { user } }
+    return response.data.data || response.data;
   },
 
   getUserById: async (id) => {
     const response = await api.get(`/users/${id}`);
-    return response.data;
+    // Backend returns { status: "success", data: { user } }
+    return response.data.data || response.data;
   },
 
   getUserEvents: async (id) => {
     const response = await api.get(`/users/${id}/events`);
-    return response.data;
+    // Backend returns { status: "success", data: { events } }
+    return response.data.data || response.data;
   },
 
   searchUsers: async (query, limit = 20) => {

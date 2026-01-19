@@ -262,7 +262,7 @@ const CompactSearchBar = ({ onSearch }) => {
                 onFocus={handleLocationFocus}
                 onBlur={handleLocationBlur}
                 onKeyDown={handleKeyDown}
-                placeholder="Enter city"
+                placeholder="Search events, groups or enter a new city"
                 className="w-full outline-none text-gray-900 placeholder-gray-500 text-base"
                 aria-label="City or ZIP code"
                 aria-autocomplete="list"

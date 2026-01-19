@@ -2,24 +2,52 @@ import api from './api';
 
 export const eventService = {
   getEvents: async (filters = {}, page = 1, limit = 20) => {
+    // Filter out empty/undefined/null values and convert to strings
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters)
+        .filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => [k, String(v)])
+    );
+    
     const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
+      page: String(page),
+      limit: String(limit),
+      ...cleanFilters,
     });
-    const response = await api.get(`/events?${params}`);
-    return response.data;
+    
+    try {
+      const response = await api.get(`/events?${params}`);
+      // Backend returns { status: "success", data: { events, pagination } }
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      throw error;
+    }
   },
 
   searchEvents: async (query, filters = {}, page = 1, limit = 20) => {
+    // Filter out empty/undefined/null values and convert to strings
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters)
+        .filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => [k, String(v)])
+    );
+    
     const params = new URLSearchParams({
-      q: query,
-      page: page.toString(),
-      limit: limit.toString(),
-      ...filters,
+      q: String(query),
+      page: String(page),
+      limit: String(limit),
+      ...cleanFilters,
     });
-    const response = await api.get(`/events/search?${params}`);
-    return response.data;
+    
+    try {
+      const response = await api.get(`/events/search?${params}`);
+      // Backend returns { status: "success", data: { events, pagination } }
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Error searching events:', error);
+      throw error;
+    }
   },
 
   getEventById: async (id) => {
