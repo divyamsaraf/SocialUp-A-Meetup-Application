@@ -1,10 +1,27 @@
 const Event = require("../models/event.model");
 const { EVENT_STATUS } = require("../config/constants");
 
+const toGeoPoint = (lat, lng) => {
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
+  if (Number.isNaN(parsedLat) || Number.isNaN(parsedLng)) return null;
+  return { type: "Point", coordinates: [parsedLng, parsedLat] };
+};
+
+const milesToMeters = (miles) => miles * 1609.34;
+
 // Create event
 const createEvent = async (eventData, hostId) => {
   const Group = require("../models/group.model");
   const notificationService = require("./notification.service");
+
+  // Keep existing location.coordinates for UI, but also populate GeoJSON for geo queries
+  if (eventData?.location?.coordinates?.lat != null && eventData?.location?.coordinates?.lng != null) {
+    const geo = toGeoPoint(eventData.location.coordinates.lat, eventData.location.coordinates.lng);
+    if (geo) {
+      eventData.location.geo = geo;
+    }
+  }
   
   const event = await Event.create({
     ...eventData,
@@ -86,36 +103,111 @@ const getEvents = async (filters = {}, page = 1, limit = 20) => {
     query.dateAndTime = { $lt: new Date() };
   }
   
-  // Geolocation filter (if coordinates provided)
-  if (filters.lat && filters.lng && filters.radius) {
-    query["location.coordinates"] = {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: [parseFloat(filters.lng), parseFloat(filters.lat)],
-        },
-        $maxDistance: parseInt(filters.radius) * 1000, // Convert km to meters
+  const hasGeo = filters.lat && filters.lng && (filters.radius || filters.radiusMiles);
+  const hasCity = filters.city && String(filters.city).trim();
+  const hasZip = filters.zipCode && String(filters.zipCode).trim();
+
+  const parsedPage = parseInt(page);
+  const parsedLimit = parseInt(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  // If a location filter is provided, keep behavior recruiter-friendly:
+  // - Always include online events
+  // - For in-person, apply geo radius or city/zip match
+  if (hasGeo || hasCity || hasZip) {
+    const baseMatch = { ...query };
+
+    const inPersonMatch = {
+      ...baseMatch,
+      eventLocationType: "in-person",
+    };
+
+    if (hasCity) {
+      inPersonMatch["location.city"] = { $regex: `^${String(filters.city).trim()}$`, $options: "i" };
+    }
+    if (hasZip) {
+      inPersonMatch["location.zipCode"] = String(filters.zipCode).trim();
+    }
+
+    const onlineMatch = {
+      ...baseMatch,
+      eventLocationType: "online",
+    };
+
+    let inPersonEvents = [];
+    if (hasGeo) {
+      const radiusMiles = Number(filters.radiusMiles ?? filters.radius);
+      const maxDistanceMeters = milesToMeters(radiusMiles);
+      const near = toGeoPoint(filters.lat, filters.lng);
+
+      if (near) {
+        const agg = await Event.aggregate([
+          {
+            $geoNear: {
+              near,
+              key: "location.geo",
+              distanceField: "distanceMeters",
+              spherical: true,
+              maxDistance: maxDistanceMeters,
+              query: inPersonMatch,
+            },
+          },
+          { $sort: { dateAndTime: 1 } },
+          // fetch enough rows so we can paginate after merging with online
+          { $limit: Math.max(100, parsedLimit * 5) },
+        ]);
+        inPersonEvents = agg.map((e) => ({
+          ...e,
+          distanceMiles: e.distanceMeters != null ? Number((e.distanceMeters / 1609.34).toFixed(1)) : undefined,
+        }));
+      }
+    } else {
+      inPersonEvents = await Event.find(inPersonMatch)
+        .populate("hostedBy", "name username profile_pic")
+        .sort({ dateAndTime: 1 })
+        .limit(Math.max(100, parsedLimit * 5))
+        .lean();
+    }
+
+    const onlineEvents = await Event.find(onlineMatch)
+      .populate("hostedBy", "name username profile_pic")
+      .sort({ dateAndTime: 1 })
+      .limit(Math.max(100, parsedLimit * 5))
+      .lean();
+
+    // Merge and sort by date
+    const combined = [...inPersonEvents, ...onlineEvents].sort(
+      (a, b) => new Date(a.dateAndTime) - new Date(b.dateAndTime)
+    );
+
+    const paged = combined.slice(skip, skip + parsedLimit);
+
+    return {
+      events: paged,
+      pagination: {
+        page: parsedPage,
+        limit: parsedLimit,
+        total: combined.length,
+        pages: Math.ceil(combined.length / parsedLimit),
       },
     };
   }
-  
-  const skip = (page - 1) * limit;
   
   const events = await Event.find(query)
     .populate("hostedBy", "name username profile_pic")
     .sort({ dateAndTime: 1 })
     .skip(skip)
-    .limit(parseInt(limit));
+    .limit(parsedLimit);
   
   const total = await Event.countDocuments(query);
   
   return {
     events,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: parsedPage,
+      limit: parsedLimit,
       total,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil(total / parsedLimit),
     },
   };
 };
@@ -142,24 +234,46 @@ const searchEvents = async (searchQuery, filters = {}, page = 1, limit = 20) => 
   if (filters.upcoming) {
     query.dateAndTime = { $gte: new Date() };
   }
+
+  // Optional location filter for search results (same semantics as getEvents)
+  if (filters.city) {
+    query.$and = query.$and || [];
+    query.$and.push({
+      $or: [
+        { eventLocationType: "online" },
+        { "location.city": { $regex: `^${String(filters.city).trim()}$`, $options: "i" } },
+      ],
+    });
+  }
+  if (filters.zipCode) {
+    query.$and = query.$and || [];
+    query.$and.push({
+      $or: [
+        { eventLocationType: "online" },
+        { "location.zipCode": String(filters.zipCode).trim() },
+      ],
+    });
+  }
   
-  const skip = (page - 1) * limit;
+  const parsedPage = parseInt(page);
+  const parsedLimit = parseInt(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
   
   const events = await Event.find(query)
     .populate("hostedBy", "name username profile_pic")
     .sort({ dateAndTime: 1 })
     .skip(skip)
-    .limit(parseInt(limit));
+    .limit(parsedLimit);
   
   const total = await Event.countDocuments(query);
   
   return {
     events,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: parsedPage,
+      limit: parsedLimit,
       total,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil(total / parsedLimit),
     },
   };
 };
@@ -388,4 +502,5 @@ module.exports = {
   rsvpEvent,
   cancelRSVP,
   updateEventStatus,
+  toGeoPoint,
 };

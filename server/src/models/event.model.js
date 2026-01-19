@@ -48,6 +48,18 @@ const eventSchema = new mongoose.Schema(
         lat: { type: Number },
         lng: { type: Number },
       },
+      // GeoJSON point used for MongoDB geospatial queries (keeps existing coordinates for UI/maps)
+      geo: {
+        type: {
+          type: String,
+          enum: ["Point"],
+          default: "Point",
+        },
+        coordinates: {
+          type: [Number], // [lng, lat]
+          default: undefined,
+        },
+      },
     },
     eventImage: { type: String },
     maxAttendees: {
@@ -85,7 +97,7 @@ eventSchema.index({ eventCategory: 1 });
 eventSchema.index({ eventLocationType: 1 });
 eventSchema.index({ hostedBy: 1 });
 eventSchema.index({ eventStatus: 1 });
-eventSchema.index({ "location.coordinates": "2dsphere" }); // For geolocation queries
+eventSchema.index({ "location.geo": "2dsphere" }); // For geolocation queries
 
 // Virtual to check if event is full
 eventSchema.virtual("isFull").get(function () {
