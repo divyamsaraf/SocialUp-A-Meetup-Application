@@ -1,24 +1,43 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLocation } from '../../contexts/LocationContext';
 import { eventService } from '../../services/event.service';
 import EventCard from '../events/EventCard';
 import Loading from '../common/Loading';
 import ErrorMessage from '../common/ErrorMessage';
 import EmptyState from '../common/EmptyState';
 
-const HomeEventsPreview = () => {
+const HomeEventsPreview = ({ onLocationEdit }) => {
+  const { selectedLocation, loading: locationLoading } = useLocation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (!locationLoading) {
+      fetchEvents();
+    }
+  }, [selectedLocation, locationLoading]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await eventService.getEvents({}, 1, 3);
+      const filters = { upcoming: true };
+      
+      if (selectedLocation) {
+        if (selectedLocation.lat && selectedLocation.lng) {
+          filters.lat = selectedLocation.lat;
+          filters.lng = selectedLocation.lng;
+          filters.radiusMiles = 25;
+        } else if (selectedLocation.city) {
+          filters.city = selectedLocation.city;
+          if (selectedLocation.state) filters.state = selectedLocation.state;
+        } else if (selectedLocation.zipCode) {
+          filters.zipCode = selectedLocation.zipCode;
+        }
+      }
+      
+      const response = await eventService.getEvents(filters, 1, 10);
       setEvents(response.data.events || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load events');
@@ -27,37 +46,83 @@ const HomeEventsPreview = () => {
     }
   };
 
-  if (loading) return <Loading />;
+  const locationLabel = selectedLocation?.label || 'you';
+
+  if (locationLoading || loading) return <Loading />;
   if (error) return <ErrorMessage message={error} />;
+
+  const handleLocationClick = () => {
+    onLocationEdit?.();
+  };
 
   if (events.length === 0) {
     return (
-      <EmptyState
-        icon="🗓️"
-        title="No upcoming events yet"
-        message="Start one and bring people together around what you love."
-        actionLabel="Create an event"
-        actionHref="/events/create"
-      />
+      <section className="mt-16">
+        <div className="flex items-baseline gap-2 mb-6">
+          <span className="text-lg text-gray-600 font-normal">
+            Events near
+          </span>
+          <button
+            onClick={handleLocationClick}
+            className="group flex items-center gap-1 text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            <span>{locationLabel}</span>
+            <svg 
+              className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        </div>
+        <EmptyState
+          icon="🗓️"
+          title="No upcoming events yet"
+          message="Start one and bring people together around what you love."
+          actionLabel="Create an event"
+          actionHref="/events/create"
+        />
+      </section>
     );
   }
 
   return (
-    <section className="mt-14">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Upcoming events</h2>
-          <p className="text-gray-600 text-sm">See what’s happening soon—online or in person.</p>
+    <section className="mt-16">
+      <div className="flex items-baseline justify-between mb-6">
+        <div className="flex items-baseline gap-2">
+          <span className="text-lg text-gray-600 font-normal">
+            Events near
+          </span>
+          <button
+            onClick={handleLocationClick}
+            className="group flex items-center gap-1 text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            <span>{locationLabel}</span>
+            <svg 
+              className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
         </div>
-        <Link to="/events" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-          View all events
+        <Link 
+          to="/events" 
+          className="text-blue-600 hover:text-blue-700 text-base font-medium flex items-center gap-1 group"
+        >
+          See all events
+          <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
       </div>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {events.map((event) => (
-          <div key={event._id} className="w-full">
-            <EventCard event={event} />
-          </div>
+          <EventCard key={event._id} event={event} />
         ))}
       </div>
     </section>

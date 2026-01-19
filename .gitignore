@@ -45,8 +45,22 @@ coverage/
 *.key
 
 # Documentation files (phase reports, guides, etc.)
+# Keep these locally, never push to GitHub
 PHASE_*.md
+*_PROGRESS.md
+*_REPORT.md
+*_SUMMARY.md
+*_CHECKLIST.md
+*_GUIDE.md
+*_IMPLEMENTATION.md
+*_FLOW.md
+*_DESIGN.md
+*_UX*.md
 ANALYSIS_REPORT.md
 VERIFICATION_REPORT.md
 COMPLETION_SUMMARY.md
 TESTING_CHECKLIST.md
+PHASE_1_IMPLEMENTATION_GUIDE.md
+PHASE_1_PROGRESS.md
+LOCATION_SYSTEM_IMPLEMENTATION.md
+CITY_SEARCH_UX_FLOW.md

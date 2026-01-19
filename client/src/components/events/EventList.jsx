@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from '../../contexts/LocationContext';
 import { eventService } from '../../services/event.service';
 import EventCard from './EventCard';
 import Loading from '../common/Loading';
 import ErrorMessage from '../common/ErrorMessage';
+import EmptyState from '../common/EmptyState';
 
 const EventList = ({ filters = {} }) => {
+  const { selectedLocation } = useLocation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -13,13 +16,29 @@ const EventList = ({ filters = {} }) => {
 
   useEffect(() => {
     fetchEvents();
-  }, [page, filters]);
+  }, [page, filters, selectedLocation]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await eventService.getEvents(filters, page, 12);
+      
+      const locationFilters = {};
+      if (selectedLocation) {
+        if (selectedLocation.lat && selectedLocation.lng) {
+          locationFilters.lat = selectedLocation.lat;
+          locationFilters.lng = selectedLocation.lng;
+          locationFilters.radiusMiles = 25;
+        } else if (selectedLocation.city) {
+          locationFilters.city = selectedLocation.city;
+          if (selectedLocation.state) locationFilters.state = selectedLocation.state;
+        } else if (selectedLocation.zipCode) {
+          locationFilters.zipCode = selectedLocation.zipCode;
+        }
+      }
+      
+      const combinedFilters = { ...filters, ...locationFilters };
+      const response = await eventService.getEvents(combinedFilters, page, 12);
       setEvents(response.data.events || []);
       setPagination(response.data.pagination);
     } catch (err) {
@@ -68,11 +87,13 @@ const EventList = ({ filters = {} }) => {
       )}
 
       {events.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-600">
-            No events nearby yet — start one and bring people together around what you love.
-          </p>
-        </div>
+        <EmptyState
+          icon="🗓️"
+          title="No events found"
+          message="No events match your filters. Try expanding your search or create one."
+          actionLabel="Create an event"
+          actionHref="/events/create"
+        />
       )}
     </div>
   );

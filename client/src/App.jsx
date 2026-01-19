@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { LocationProvider } from './contexts/LocationContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import PrivateRoute from './components/common/PrivateRoute';
@@ -21,7 +22,8 @@ import CreateGroup from './pages/CreateGroup';
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <LocationProvider>
+        <Router>
         <div className="min-h-screen bg-gray-50 flex flex-col">
           <Navbar />
           <main className="flex-grow">
@@ -88,6 +90,7 @@ function App() {
           <Footer />
         </div>
       </Router>
+      </LocationProvider>
     </AuthProvider>
   );
 }

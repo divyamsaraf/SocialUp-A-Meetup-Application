@@ -6,49 +6,67 @@ const EventCard = ({ event }) => {
   const city = event.location?.city;
   const state = event.location?.state;
   const distanceMiles = event.distanceMiles;
+  const hostName = event.host?.name || event.createdBy?.name || 'Host';
+
+  // Format date like "Sat, Feb 7 · 9:00 AM PST"
+  const formattedDate = format(new Date(event.dateAndTime), 'EEE, MMM d');
+  const formattedTime = format(new Date(event.dateAndTime), 'h:mm a');
+  // Get timezone abbreviation (e.g., PST, EST)
+  const dateObj = new Date(event.dateAndTime);
+  const timeZoneStr = dateObj.toLocaleTimeString('en-us', { timeZoneName: 'short' });
+  const timeZone = timeZoneStr.split(' ').pop() || '';
 
   return (
     <Link
       to={`/events/${event._id}`}
-      className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+      className="group block bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 hover:border-gray-300"
     >
-      {event.eventImage && (
-        <img
-          src={event.eventImage}
-          alt={event.title}
-          className="w-full h-48 object-cover"
-        />
-      )}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-            {event.eventCategory}
+      <div className="p-4 h-full flex flex-col">
+        {/* Free badge - top left */}
+        <div className="flex items-start justify-between mb-2">
+          <span className="inline-block bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded">
+            Free
           </span>
-          <span className="text-sm text-gray-500">
-            {isOnline ? '💻 Online' : '📍 In person'}
-          </span>
+          {isOnline && (
+            <span className="text-xs text-gray-500">Online</span>
+          )}
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">{event.title}</h3>
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{event.description}</p>
-        {!isOnline && (city || state || distanceMiles != null) && (
-          <div className="text-sm text-gray-600 mb-2">
-            {city || state ? (
-              <span>
-                {city || '—'}
-                {state ? `, ${state}` : ''}
-              </span>
-            ) : null}
+
+        {/* Event title */}
+        <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug">
+          {event.title}
+        </h3>
+
+        {/* Date & time */}
+        <div className="text-sm text-gray-600 mb-2">
+          {formattedDate} · {formattedTime} {timeZone}
+        </div>
+
+        {/* Location or Online */}
+        {isOnline ? (
+          <div className="text-sm text-gray-600 mb-3">Online event</div>
+        ) : (
+          <div className="text-sm text-gray-600 mb-3">
+            {city && state ? `${city}, ${state}` : city || state || 'Location TBD'}
             {distanceMiles != null && (
-              <span>
-                {(city || state) ? ' · ' : ''}
-                {distanceMiles} miles away
-              </span>
+              <span className="text-gray-500"> · {distanceMiles} mi</span>
             )}
           </div>
         )}
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>{format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}</span>
-          <span>{event.attendees?.length || 0} attendees</span>
+
+        {/* Host/Group */}
+        <div className="text-sm text-gray-500 mb-3">
+          by {hostName}
+        </div>
+
+        {/* Attendee count */}
+        <div className="mt-auto pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-1 text-sm text-gray-600">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {event.attendees?.length || 0} going
+          </div>
         </div>
       </div>
     </Link>

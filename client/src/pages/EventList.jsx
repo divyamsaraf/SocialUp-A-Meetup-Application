@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useLocation } from '../contexts/LocationContext';
 import EventListComponent from '../components/events/EventList';
 import EventCard from '../components/events/EventCard';
 import FilterBar from '../components/events/FilterBar';
@@ -9,9 +10,10 @@ import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EventsIntroBanner from '../components/events/EventsIntroBanner';
 import { MESSAGING } from '../utils/constants';
-import LocationSelector from '../components/location/LocationSelector';
+import LocationSearch from '../components/location/LocationSearch';
 
 const EventListPage = () => {
+  const { selectedLocation } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState({
@@ -19,16 +21,26 @@ const EventListPage = () => {
     eventLocationType: searchParams.get('locationType') || '',
     upcoming: searchParams.get('upcoming') === 'true',
   });
-  const [locationFilters, setLocationFilters] = useState({
-    city: searchParams.get('city') || '',
-    zipCode: searchParams.get('zipCode') || '',
-    lat: searchParams.get('lat') || '',
-    lng: searchParams.get('lng') || '',
-    radiusMiles: searchParams.get('radiusMiles') || '',
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('list');
+
+  const getLocationParams = () => {
+    const params = {};
+    if (selectedLocation) {
+      if (selectedLocation.lat && selectedLocation.lng) {
+        params.lat = selectedLocation.lat;
+        params.lng = selectedLocation.lng;
+        params.radiusMiles = '25';
+      } else if (selectedLocation.city) {
+        params.city = selectedLocation.city;
+        if (selectedLocation.state) params.state = selectedLocation.state;
+      } else if (selectedLocation.zipCode) {
+        params.zipCode = selectedLocation.zipCode;
+      }
+    }
+    return params;
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -40,11 +52,7 @@ const EventListPage = () => {
       const params = new URLSearchParams({
         q: searchQuery,
         ...filters,
-        ...(locationFilters.city && { city: locationFilters.city }),
-        ...(locationFilters.zipCode && { zipCode: locationFilters.zipCode }),
-        ...(locationFilters.lat && { lat: locationFilters.lat }),
-        ...(locationFilters.lng && { lng: locationFilters.lng }),
-        ...(locationFilters.radiusMiles && { radiusMiles: String(locationFilters.radiusMiles) }),
+        ...getLocationParams(),
       });
       setSearchParams(params);
     } catch (err) {
@@ -61,11 +69,7 @@ const EventListPage = () => {
       ...(newFilters.eventCategory && { category: newFilters.eventCategory }),
       ...(newFilters.eventLocationType && { locationType: newFilters.eventLocationType }),
       ...(newFilters.upcoming && { upcoming: 'true' }),
-      ...(locationFilters.city && { city: locationFilters.city }),
-      ...(locationFilters.zipCode && { zipCode: locationFilters.zipCode }),
-      ...(locationFilters.lat && { lat: locationFilters.lat }),
-      ...(locationFilters.lng && { lng: locationFilters.lng }),
-      ...(locationFilters.radiusMiles && { radiusMiles: String(locationFilters.radiusMiles) }),
+      ...getLocationParams(),
     });
     setSearchParams(params);
   };
@@ -73,7 +77,9 @@ const EventListPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-2">
-        <h1 className="text-3xl font-bold text-gray-900">Events near you</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Events near {selectedLocation?.label || 'you'}
+        </h1>
         <p className="text-gray-600">Discover what’s happening around you or online.</p>
       </div>
 
@@ -88,31 +94,9 @@ const EventListPage = () => {
       />
 
       <div className="mb-6">
-        <LocationSelector
-          className="mb-4"
-          onChange={(loc) => {
-            const next = {
-              city: loc.city || '',
-              zipCode: loc.zipCode || '',
-              lat: loc.lat || '',
-              lng: loc.lng || '',
-              radiusMiles: loc.radiusMiles || '',
-            };
-            setLocationFilters(next);
-            const params = new URLSearchParams({
-              ...(searchQuery && { q: searchQuery }),
-              ...(filters.eventCategory && { category: filters.eventCategory }),
-              ...(filters.eventLocationType && { locationType: filters.eventLocationType }),
-              ...(filters.upcoming && { upcoming: 'true' }),
-              ...(next.city && { city: next.city }),
-              ...(next.zipCode && { zipCode: next.zipCode }),
-              ...(next.lat && { lat: next.lat }),
-              ...(next.lng && { lng: next.lng }),
-              ...(next.radiusMiles && { radiusMiles: String(next.radiusMiles) }),
-            });
-            setSearchParams(params);
-          }}
-        />
+        <div className="mb-4">
+          <LocationSearch placeholder={selectedLocation?.label || 'Enter city or ZIP code'} />
+        </div>
         <form onSubmit={handleSearch} className="flex gap-2">
           <input
             type="text"
@@ -173,23 +157,41 @@ const EventListPage = () => {
 };
 
 const EventMapView = ({ filters, searchQuery }) => {
+  const { selectedLocation } = useLocation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchEvents();
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, selectedLocation]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       setError('');
+      
+      const locationFilters = {};
+      if (selectedLocation) {
+        if (selectedLocation.lat && selectedLocation.lng) {
+          locationFilters.lat = selectedLocation.lat;
+          locationFilters.lng = selectedLocation.lng;
+          locationFilters.radiusMiles = 25;
+        } else if (selectedLocation.city) {
+          locationFilters.city = selectedLocation.city;
+          if (selectedLocation.state) locationFilters.state = selectedLocation.state;
+        } else if (selectedLocation.zipCode) {
+          locationFilters.zipCode = selectedLocation.zipCode;
+        }
+      }
+      
+      const combinedFilters = { ...filters, ...locationFilters };
+      
       let response;
       if (searchQuery) {
-        response = await eventService.searchEvents(searchQuery, filters, 1, 100);
+        response = await eventService.searchEvents(searchQuery, combinedFilters, 1, 100);
       } else {
-        response = await eventService.getEvents(filters, 1, 100);
+        response = await eventService.getEvents(combinedFilters, 1, 100);
       }
       const eventList = response.data.events || [];
       const inPersonEvents = eventList.filter(
@@ -219,10 +221,15 @@ const EventMapView = ({ filters, searchQuery }) => {
     );
   }
 
-  return <MapComponent events={events} />;
+  const mapCenter = selectedLocation?.lat && selectedLocation?.lng
+    ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
+    : null;
+
+  return <MapComponent events={events} center={mapCenter} zoom={12} />;
 };
 
 const SearchResults = ({ query, filters }) => {
+  const { selectedLocation } = useLocation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -231,13 +238,29 @@ const SearchResults = ({ query, filters }) => {
 
   useEffect(() => {
     fetchSearchResults();
-  }, [query, filters, page]);
+  }, [query, filters, page, selectedLocation]);
 
   const fetchSearchResults = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await eventService.searchEvents(query, filters, page, 12);
+      
+      const locationFilters = {};
+      if (selectedLocation) {
+        if (selectedLocation.lat && selectedLocation.lng) {
+          locationFilters.lat = selectedLocation.lat;
+          locationFilters.lng = selectedLocation.lng;
+          locationFilters.radiusMiles = 25;
+        } else if (selectedLocation.city) {
+          locationFilters.city = selectedLocation.city;
+          if (selectedLocation.state) locationFilters.state = selectedLocation.state;
+        } else if (selectedLocation.zipCode) {
+          locationFilters.zipCode = selectedLocation.zipCode;
+        }
+      }
+      
+      const combinedFilters = { ...filters, ...locationFilters };
+      const response = await eventService.searchEvents(query, combinedFilters, page, 12);
       setEvents(response.data.events || []);
       setPagination(response.data.pagination);
     } catch (err) {

@@ -26,6 +26,52 @@ export const EVENT_STATUS = {
   CANCELLED: "cancelled",
 };
 
+// Category cards for homepage discovery
+export const CATEGORY_CARDS = [
+  {
+    key: "Tech",
+    title: "Tech",
+    description: "Meetups for developers, builders, and tech enthusiasts",
+    icon: "💻",
+    href: "/events?category=Tech",
+  },
+  {
+    key: "Business",
+    title: "Business",
+    description: "Networking, startups, and professional growth",
+    icon: "📈",
+    href: "/events?category=Business",
+  },
+  {
+    key: "Arts & Culture",
+    title: "Arts & Culture",
+    description: "Creativity, music, and cultural events",
+    icon: "🎨",
+    href: "/events?category=Arts%20%26%20Culture",
+  },
+  {
+    key: "Sports & Recreation",
+    title: "Sports & Recreation",
+    description: "Stay active and meet people outdoors",
+    icon: "⚽",
+    href: "/events?category=Sports%20%26%20Recreation",
+  },
+  {
+    key: "Health & Wellness",
+    title: "Health & Wellness",
+    description: "Mindfulness, fitness, and well-being",
+    icon: "🧘",
+    href: "/events?category=Health%20%26%20Wellness",
+  },
+  {
+    key: "Food & Drink",
+    title: "Food & Drink",
+    description: "Cooking, tastings, and social dining",
+    icon: "🍜",
+    href: "/events?category=Food%20%26%20Drink",
+  },
+];
+
 // Product messaging (kept configurable for reuse)
 export const MESSAGING = {
   hero: {
