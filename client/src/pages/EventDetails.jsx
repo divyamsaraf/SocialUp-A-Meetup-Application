@@ -221,7 +221,7 @@ const EventDetails = () => {
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-3">Hosted by</h2>
                   <Link
-                    to={`/profile/${event.hostedBy?._id}`}
+                    to={`/profile/${event.hostedBy?.username || event.hostedBy?._id}`}
                     className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <img
@@ -250,7 +250,7 @@ const EventDetails = () => {
                         return (
                           <Link
                             key={attendeeData?._id || attendee}
-                            to={`/profile/${attendeeData?._id || attendee}`}
+                            to={`/profile/${attendeeData?.username || attendeeData?._id || attendee}`}
                             className="flex flex-col items-center gap-1"
                             title={attendeeData?.name || 'User'}
                           >

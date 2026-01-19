@@ -33,7 +33,7 @@ const createEvent = async (eventData, hostId) => {
   // If event belongs to a group, notify group members
   if (eventData.groupDetail && eventData.groupDetail.groupId) {
     try {
-      const group = await Group.findById(eventData.groupDetail.groupId).populate("members");
+      const group = await Group.findById(eventData.groupDetail.groupId).populate("members", "name username profile_pic");
       if (group && group.members) {
         const notificationPromises = group.members
           .filter(member => member._id.toString() !== hostId.toString())
@@ -284,7 +284,7 @@ const updateEvent = async (eventId, updateData, userId) => {
   const emailService = require("./email.service");
   const User = require("../models/user.model");
   
-  const event = await Event.findById(eventId).populate("attendees");
+  const event = await Event.findById(eventId).populate("attendees", "name username profile_pic");
   
   if (!event) {
     throw new Error("Event not found");
@@ -408,7 +408,7 @@ const rsvpEvent = async (eventId, userId) => {
   const notificationService = require("./notification.service");
   const emailService = require("./email.service");
   
-  const event = await Event.findById(eventId).populate("hostedBy", "name email");
+  const event = await Event.findById(eventId).populate("hostedBy", "name username email");
   const user = await User.findById(userId);
   
   if (!event) {

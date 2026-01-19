@@ -31,8 +31,15 @@ export const userService = {
     return response.data.data || response.data;
   },
 
-  getUserEvents: async (id) => {
-    const response = await api.get(`/users/${id}/events`);
+  getUserByUsername: async (username) => {
+    const response = await api.get(`/users/username/${username}`);
+    // Backend returns { status: "success", data: { user } }
+    return response.data.data || response.data;
+  },
+
+  getUserEvents: async (identifier) => {
+    // Supports both ID and username
+    const response = await api.get(`/users/${identifier}/events`);
     // Backend returns { status: "success", data: { events } }
     return response.data.data || response.data;
   },

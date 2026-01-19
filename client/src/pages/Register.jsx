@@ -6,6 +6,11 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import LayoutContainer from '../components/common/LayoutContainer';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { colors } from '../theme';
+import { typography } from '../theme';
+import { spacing } from '../theme';
+import { borderRadius } from '../theme';
+import { inputs } from '../theme';
 
 const Register = () => {
   const { register: registerUser } = useAuth();
@@ -39,19 +44,46 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div 
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        backgroundColor: colors.background.secondary,
+        paddingTop: spacing[12],
+        paddingBottom: spacing[12],
+        paddingLeft: spacing[4],
+        paddingRight: spacing[4],
+      }}
+    >
       <LayoutContainer>
         <div className="max-w-md w-full mx-auto">
           <Card className="p-6 sm:p-8">
-            <div className="mb-6">
-              <h2 className="text-center text-3xl font-bold text-gray-900 mb-2">
+            <div style={{ marginBottom: spacing[6] }}>
+              <h2 
+                className="text-center mb-2"
+                style={{
+                  fontSize: typography.fontSize['3xl'],
+                  fontWeight: typography.fontWeight.bold,
+                  color: colors.text.primary,
+                }}
+              >
                 Create your account
               </h2>
-              <p className="text-center text-sm text-gray-600">
+              <p 
+                className="text-center"
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: colors.text.secondary,
+                }}
+              >
                 Or{' '}
                 <Link
                   to="/login"
-                  className="font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+                  className="font-medium focus:outline-none focus:underline transition-colors"
+                  style={{
+                    color: colors.primary[600],
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = colors.primary[700]}
+                  onMouseLeave={(e) => e.target.style.color = colors.primary[600]}
                   aria-label="Sign in to your existing account"
                 >
                   sign in to your existing account
@@ -169,7 +201,7 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div style={{ paddingTop: spacing[2] }}>
                 <Button
                   type="submit"
                   disabled={loading}

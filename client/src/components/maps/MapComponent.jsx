@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { colors } from '../../theme';
+import { borderRadius } from '../../theme';
 
 const MapComponent = ({ events = [], center = null, zoom = 10 }) => {
   const mapRef = useRef(null);
@@ -89,8 +91,12 @@ const MapComponent = ({ events = [], center = null, zoom = 10 }) => {
   return (
     <div
       ref={mapRef}
-      style={{ width: '100%', height: '400px', borderRadius: '8px' }}
-      className="border border-gray-300"
+      style={{ 
+        width: '100%', 
+        height: '400px', 
+        borderRadius: borderRadius.lg,
+        border: `1px solid ${colors.border.default}`,
+      }}
     />
   );
 };

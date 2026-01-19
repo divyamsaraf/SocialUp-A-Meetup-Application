@@ -8,6 +8,11 @@ import PrivateRoute from '../components/common/PrivateRoute';
 import LayoutContainer from '../components/common/LayoutContainer';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { colors } from '../theme';
+import { typography } from '../theme';
+import { spacing } from '../theme';
+import { borderRadius } from '../theme';
+import { inputs } from '../theme';
 
 const CreateGroup = () => {
   const navigate = useNavigate();
@@ -143,7 +148,13 @@ const CreateGroup = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <div 
+                  className="flex flex-col sm:flex-row"
+                  style={{
+                    marginTop: spacing[6],
+                    gap: spacing[3],
+                  }}
+                >
                   <Button
                     type="submit"
                     disabled={loading}

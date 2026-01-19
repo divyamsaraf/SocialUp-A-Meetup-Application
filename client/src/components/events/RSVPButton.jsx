@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { eventService } from '../../services/event.service';
+import Button from '../ui/Button';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
 
 const RSVPButton = ({ event, onRSVPChange }) => {
   const { isAuthenticated } = useAuth();
@@ -47,12 +51,13 @@ const RSVPButton = ({ event, onRSVPChange }) => {
 
   if (!isAuthenticated) {
     return (
-      <button
+      <Button
         disabled
-        className="w-full bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed"
+        fullWidth
+        variant="secondary"
       >
         Login to RSVP
-      </button>
+      </Button>
     );
   }
 
@@ -61,27 +66,35 @@ const RSVPButton = ({ event, onRSVPChange }) => {
 
   return (
     <div>
-      <button
+      <Button
         onClick={handleRSVP}
         disabled={loading || isFull}
-        className={`w-full px-4 py-2 rounded-md font-medium ${
-          isRSVPd
-            ? 'bg-red-600 hover:bg-red-700 text-white'
-            : isFull
-            ? 'bg-gray-400 cursor-not-allowed text-white'
-            : 'bg-blue-600 hover:bg-blue-700 text-white'
-        } disabled:opacity-50`}
+        isLoading={loading}
+        fullWidth
+        variant={isRSVPd ? 'danger' : isFull ? 'secondary' : 'primary'}
       >
-        {loading
-          ? 'Loading...'
-          : isRSVPd
-          ? 'Cancel RSVP'
-          : isFull
-          ? 'Event Full'
-          : 'RSVP'}
-      </button>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      <p className="mt-2 text-sm text-gray-600">
+        {isRSVPd ? 'Cancel RSVP' : isFull ? 'Event Full' : 'RSVP'}
+      </Button>
+      {error && (
+        <p 
+          className="mt-2"
+          style={{
+            fontSize: typography.fontSize.sm,
+            color: colors.error[600],
+            marginTop: spacing[2],
+          }}
+        >
+          {error}
+        </p>
+      )}
+      <p 
+        className="mt-2"
+        style={{
+          fontSize: typography.fontSize.sm,
+          color: colors.text.secondary,
+          marginTop: spacing[2],
+        }}
+      >
         {attendeeCount} {event.maxAttendees ? `/ ${event.maxAttendees}` : ''} attendees
       </p>
     </div>

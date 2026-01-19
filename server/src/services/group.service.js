@@ -47,9 +47,36 @@ const getGroups = async (filters = {}, page = 1, limit = 20) => {
 
   const skip = (page - 1) * limit;
 
+  // Handle sorting
+  let sortOption = { createdAt: -1 }; // Default: newest first
+  if (filters.sortBy) {
+    switch (filters.sortBy) {
+      case 'popularity':
+        // Sort by member count (descending)
+        sortOption = { members: -1, createdAt: -1 };
+        break;
+      case 'newest':
+        sortOption = { createdAt: -1 };
+        break;
+      case 'members':
+        sortOption = { members: -1, createdAt: -1 };
+        break;
+      case 'name':
+        sortOption = { name: 1 };
+        break;
+      case 'relevance':
+        // For text search, relevance is handled by MongoDB text search
+        // Otherwise default to popularity
+        sortOption = { members: -1, createdAt: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+  }
+
   const groups = await Group.find(query)
     .populate("organizer", "name username profile_pic")
-    .sort({ createdAt: -1 })
+    .sort(sortOption)
     .skip(skip)
     .limit(parseInt(limit));
 

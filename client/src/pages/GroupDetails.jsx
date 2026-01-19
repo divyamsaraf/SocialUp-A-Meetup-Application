@@ -210,7 +210,7 @@ const GroupDetails = () => {
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-3">Organized by</h2>
                   <Link
-                    to={`/profile/${group.organizer?._id}`}
+                    to={`/profile/${group.organizer?.username || group.organizer?._id}`}
                     className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <img
@@ -270,7 +270,7 @@ const GroupDetails = () => {
                         return (
                           <Link
                             key={memberData?._id || member}
-                            to={`/profile/${memberData?._id || member}`}
+                            to={`/profile/${memberData?.username || memberData?._id || member}`}
                             className="flex flex-col items-center gap-1"
                             title={memberData?.name || 'Member'}
                           >

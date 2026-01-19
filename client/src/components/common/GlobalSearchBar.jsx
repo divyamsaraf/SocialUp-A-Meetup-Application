@@ -5,6 +5,14 @@ import CityInput from './CityInput';
 import FiltersDropdown from './FiltersDropdown';
 import SuggestionList from './SuggestionList';
 import Button from '../ui/Button';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
+import { borderRadius } from '../../theme';
+import { shadows } from '../../theme';
+import { inputs } from '../../theme';
+import { icons } from '../../theme';
+import { zIndex } from '../../theme';
 
 /**
  * GlobalSearchBar - Reusable search component for Events, Groups, and other pages
@@ -68,6 +76,7 @@ const GlobalSearchBar = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [userRequestedSuggestions, setUserRequestedSuggestions] = useState(false);
   
   // Loading states
   const [locationLoading, setLocationLoading] = useState(false);
@@ -83,9 +92,11 @@ const GlobalSearchBar = ({
   const debounceTimerRef = useRef(null);
 
   // Initialize city query from selectedLocation
+  // Don't show suggestions on initial load if city is already selected
   useEffect(() => {
     if (selectedLocation?.label && !defaultCity) {
       setCityQuery(selectedLocation.label);
+      setUserRequestedSuggestions(false); // Don't auto-show suggestions if city is already set
     }
   }, [selectedLocation, defaultCity]);
 
@@ -132,9 +143,11 @@ const GlobalSearchBar = ({
   }, [searchQuery, searchScope, onSuggestionsFetch]);
 
   // Fetch location suggestions when city query changes
+  // Only show suggestions if user has no city selected OR user explicitly requested suggestions
   useEffect(() => {
     if (!cityQuery.trim() || cityQuery === selectedLocation?.label) {
       setLocationSuggestions([]);
+      setShowLocationDropdown(false);
       return;
     }
 
@@ -144,6 +157,20 @@ const GlobalSearchBar = ({
 
     if (cityQuery.trim().length < 2) {
       setLocationSuggestions([]);
+      setShowLocationDropdown(false);
+      return;
+    }
+
+    // Only show dropdown if:
+    // 1. User has no city selected (no selectedLocation or default location), OR
+    // 2. User is actively typing/searching (userRequestedSuggestions is true)
+    const shouldShowDropdown = !selectedLocation || 
+                               selectedLocation.label === 'Seattle, WA' || // Default location
+                               userRequestedSuggestions;
+
+    if (!shouldShowDropdown) {
+      setLocationSuggestions([]);
+      setShowLocationDropdown(false);
       return;
     }
 
@@ -167,7 +194,7 @@ const GlobalSearchBar = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [cityQuery, selectedLocation]);
+  }, [cityQuery, selectedLocation, userRequestedSuggestions]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -204,13 +231,17 @@ const GlobalSearchBar = ({
     }
   };
 
-  // Handle city input focus - auto-clear if prefilled
+  // Handle city input focus - auto-clear if prefilled and mark that user is requesting suggestions
   const handleCityFocus = () => {
     if (selectedLocation && cityQuery === selectedLocation.label) {
       setCityQuery('');
+      setUserRequestedSuggestions(true); // User is actively searching
       setTimeout(() => {
         cityInputRef.current?.setSelectionRange(0, 0);
       }, 0);
+    } else {
+      // User clicked on input, they want to see suggestions
+      setUserRequestedSuggestions(true);
     }
   };
 
@@ -228,6 +259,7 @@ const GlobalSearchBar = ({
     setCityQuery(suggestion.label);
     setShowLocationDropdown(false);
     setLocationError('');
+    setUserRequestedSuggestions(false); // Reset flag after selection
   };
 
   // Handle "Use my location" CTA
@@ -328,14 +360,30 @@ const GlobalSearchBar = ({
   };
 
   return (
-    <div ref={containerRef} className="space-y-3">
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2">
+    <div ref={containerRef} style={{ gap: spacing[3] }} className="space-y-3">
+      <form onSubmit={handleSubmit} style={{ gap: spacing[3] }} className="space-y-3">
+        <div className="flex flex-col sm:flex-row" style={{ gap: spacing[2] }}>
           {/* Search Input */}
           <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div 
+              className="absolute inset-y-0 left-0 flex items-center pointer-events-none"
+              style={{
+                paddingLeft: spacing[4],
+              }}
+            >
+              <svg 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                aria-hidden="true"
+                style={{
+                  width: icons.size.md,
+                  height: icons.size.md,
+                  strokeWidth: icons.strokeWidth.normal,
+                  color: colors.text.tertiary,
+                }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <input
@@ -345,7 +393,24 @@ const GlobalSearchBar = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
               placeholder={placeholder}
-              className="w-full pl-12 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              className="w-full focus:outline-none focus:ring-2"
+              style={{
+                ...inputs.base,
+                ...inputs.size.md,
+                ...inputs.state.default,
+                borderRadius: borderRadius.lg,
+                paddingLeft: '3rem',
+                paddingRight: searchQuery ? '2.5rem' : spacing[4],
+              }}
+              onFocus={(e) => {
+                e.target.style.border = `2px solid ${colors.border.focus}`;
+                e.target.style.boxShadow = `0 0 0 3px ${colors.primary[100]}`;
+                setShowSuggestions(true);
+              }}
+              onBlur={(e) => {
+                e.target.style.border = `1px solid ${colors.border.default}`;
+                e.target.style.boxShadow = 'none';
+              }}
               aria-label="Search input"
               aria-autocomplete="list"
               aria-expanded={showSuggestions}
@@ -359,12 +424,25 @@ const GlobalSearchBar = ({
                   setSearchQuery('');
                   searchInputRef.current?.focus();
                 }}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center transition-colors hover:opacity-80"
+                style={{
+                  paddingRight: spacing[3],
+                  color: colors.text.tertiary,
+                }}
                 aria-label="Clear search"
                 title="Clear search"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  style={{
+                    width: icons.size.sm,
+                    height: icons.size.sm,
+                    strokeWidth: icons.strokeWidth.normal,
+                  }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}
@@ -400,14 +478,39 @@ const GlobalSearchBar = ({
             {showLocationDropdown && (locationSuggestions.length > 0 || locationLoading) && (
               <div
                 ref={locationDropdownRef}
-                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                className="absolute w-full overflow-y-auto"
+                style={{
+                  marginTop: spacing[1],
+                  backgroundColor: colors.surface.default,
+                  border: `1px solid ${colors.border.default}`,
+                  borderRadius: borderRadius.lg,
+                  boxShadow: shadows.xl,
+                  zIndex: zIndex.modal,
+                  maxHeight: '16rem',
+                }}
                 role="listbox"
                 aria-label="Location suggestions"
               >
                 {locationLoading ? (
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">Searching...</div>
+                  <div 
+                    style={{
+                      padding: `${spacing[3]} ${spacing[4]}`,
+                      fontSize: typography.fontSize.sm,
+                      color: colors.text.tertiary,
+                      textAlign: 'center',
+                    }}
+                  >
+                    Searching...
+                  </div>
                 ) : locationSuggestions.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                  <div 
+                    style={{
+                      padding: `${spacing[3]} ${spacing[4]}`,
+                      fontSize: typography.fontSize.sm,
+                      color: colors.text.tertiary,
+                      textAlign: 'center',
+                    }}
+                  >
                     {locationError || 'No results found'}
                   </div>
                 ) : (
@@ -416,10 +519,29 @@ const GlobalSearchBar = ({
                       key={idx}
                       type="button"
                       onClick={() => handleLocationSelect(suggestion)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                      className="w-full text-left transition-colors hover:opacity-90"
+                      style={{
+                        padding: `${spacing[2.5]} ${spacing[4]}`,
+                        borderBottom: idx < locationSuggestions.length - 1 ? `1px solid ${colors.border.light}` : 'none',
+                        backgroundColor: 'transparent',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = colors.background.tertiary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
                       role="option"
                     >
-                      <div className="text-sm text-gray-900 font-medium">{suggestion.label}</div>
+                      <div 
+                        style={{
+                          fontSize: typography.fontSize.sm,
+                          color: colors.text.primary,
+                          fontWeight: typography.fontWeight.medium,
+                        }}
+                      >
+                        {suggestion.label}
+                      </div>
                     </button>
                   ))
                 )}
@@ -436,8 +558,16 @@ const GlobalSearchBar = ({
 
       {/* Filters Row */}
       {filters.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-          <div className="flex flex-wrap items-center gap-3">
+        <div 
+          style={{
+            backgroundColor: colors.surface.default,
+            borderRadius: borderRadius.lg,
+            boxShadow: shadows.sm,
+            border: `1px solid ${colors.border.default}`,
+            padding: spacing[3],
+          }}
+        >
+          <div className="flex flex-wrap items-center" style={{ gap: spacing[3] }}>
             {filters.map((filter) => (
               <FiltersDropdown
                 key={filter.name}

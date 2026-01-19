@@ -29,16 +29,22 @@ const updateProfileValidation = [
 ];
 
 // Public routes
+// Username route must come before :id route to avoid conflicts
+router.get("/username/:username", userController.getUserByUsername);
+router.get("/search", userController.searchUsers);
+
+// IMPORTANT: /me must come before /:id to avoid route conflicts
+// Express matches routes in order, so /me must be defined before /:id
+// Apply authenticate middleware directly to /me route
+router.get("/me", authenticate, userController.getMyProfile);
+
+// Public routes that use :id parameter (must come after /me)
 router.get("/:id", userController.getUserById);
 router.get("/:id/events", userController.getUserEvents);
 router.get("/:id/groups", userController.getUserGroups);
-router.get("/search", userController.searchUsers);
 
-// Protected routes (require authentication)
+// Protected routes (require authentication for all routes below)
 router.use(authenticate);
-
-// Get current user profile
-router.get("/me", userController.getMyProfile);
 
 // Update current user profile
 router.put("/me", updateProfileValidation, userController.updateMyProfile);

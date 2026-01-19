@@ -4,7 +4,17 @@ const { USER_ROLES } = require("../config/constants");
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, trim: true },
+    username: { 
+      type: String, 
+      required: [true, "Username is required"],
+      unique: true,
+      trim: true,
+      lowercase: true,
+      minlength: [3, "Username must be at least 3 characters"],
+      maxlength: [30, "Username must be less than 30 characters"],
+      match: [/^[a-z0-9_-]+$/, "Username can only contain lowercase letters, numbers, hyphens, and underscores"],
+      index: true, // Add index for faster lookups
+    },
     email: { 
       type: String, 
       required: [true, "Email is required"], 
@@ -41,6 +51,15 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Normalize username: lowercase, trim (before validation)
+userSchema.pre("validate", function (next) {
+  // Normalize username: lowercase, trim
+  if (this.username) {
+    this.username = this.username.toLowerCase().trim();
+  }
+  next();
+});
 
 // Hash password before saving
 userSchema.pre("save", function (next) {

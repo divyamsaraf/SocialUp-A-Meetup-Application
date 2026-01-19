@@ -6,6 +6,11 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import LayoutContainer from '../components/common/LayoutContainer';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { colors } from '../theme';
+import { typography } from '../theme';
+import { spacing } from '../theme';
+import { borderRadius } from '../theme';
+import { inputs } from '../theme';
 
 const Login = () => {
   const { login } = useAuth();
@@ -36,19 +41,46 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div 
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        backgroundColor: colors.background.secondary,
+        paddingTop: spacing[12],
+        paddingBottom: spacing[12],
+        paddingLeft: spacing[4],
+        paddingRight: spacing[4],
+      }}
+    >
       <LayoutContainer>
         <div className="max-w-md w-full mx-auto">
           <Card className="p-6 sm:p-8">
-            <div className="mb-6">
-              <h2 className="text-center text-3xl font-bold text-gray-900 mb-2">
+            <div style={{ marginBottom: spacing[6] }}>
+              <h2 
+                className="text-center mb-2"
+                style={{
+                  fontSize: typography.fontSize['3xl'],
+                  fontWeight: typography.fontWeight.bold,
+                  color: colors.text.primary,
+                }}
+              >
                 Sign in to SocialUp
               </h2>
-              <p className="text-center text-sm text-gray-600">
+              <p 
+                className="text-center"
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: colors.text.secondary,
+                }}
+              >
                 Or{' '}
                 <Link
                   to="/register"
-                  className="font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+                  className="font-medium focus:outline-none focus:underline transition-colors"
+                  style={{
+                    color: colors.primary[600],
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = colors.primary[700]}
+                  onMouseLeave={(e) => e.target.style.color = colors.primary[600]}
                   aria-label="Create a new account"
                 >
                   create a new account
@@ -60,7 +92,15 @@ const Login = () => {
               
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label 
+                    htmlFor="email" 
+                    className="block mb-1"
+                    style={{
+                      fontSize: typography.fontSize.sm,
+                      fontWeight: typography.fontWeight.medium,
+                      color: colors.text.secondary,
+                    }}
+                  >
                     Email address
                   </label>
                   <input
@@ -74,19 +114,49 @@ const Login = () => {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                    className="w-full focus:outline-none focus:ring-2"
+                    style={{
+                      ...inputs.base,
+                      ...inputs.size.md,
+                      ...inputs.state.default,
+                      borderRadius: borderRadius.lg,
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.border = `2px solid ${colors.border.focus}`;
+                      e.target.style.boxShadow = `0 0 0 3px ${colors.primary[100]}`;
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.border = `1px solid ${colors.border.default}`;
+                      e.target.style.boxShadow = 'none';
+                    }}
                     placeholder="you@example.com"
                     aria-invalid={errors.email ? 'true' : 'false'}
                     aria-describedby={errors.email ? 'email-error' : undefined}
                   />
                   {errors.email && (
-                    <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">
+                    <p 
+                      id="email-error" 
+                      className="mt-1" 
+                      role="alert"
+                      style={{
+                        fontSize: typography.fontSize.sm,
+                        color: colors.error[600],
+                      }}
+                    >
                       {errors.email.message}
                     </p>
                   )}
                 </div>
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label 
+                    htmlFor="password" 
+                    className="block mb-1"
+                    style={{
+                      fontSize: typography.fontSize.sm,
+                      fontWeight: typography.fontWeight.medium,
+                      color: colors.text.secondary,
+                    }}
+                  >
                     Password
                   </label>
                   <input
@@ -100,20 +170,42 @@ const Login = () => {
                     id="password"
                     type="password"
                     autoComplete="current-password"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                    className="w-full focus:outline-none focus:ring-2"
+                    style={{
+                      ...inputs.base,
+                      ...inputs.size.md,
+                      ...inputs.state.default,
+                      borderRadius: borderRadius.lg,
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.border = `2px solid ${colors.border.focus}`;
+                      e.target.style.boxShadow = `0 0 0 3px ${colors.primary[100]}`;
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.border = `1px solid ${colors.border.default}`;
+                      e.target.style.boxShadow = 'none';
+                    }}
                     placeholder="Enter your password"
                     aria-invalid={errors.password ? 'true' : 'false'}
                     aria-describedby={errors.password ? 'password-error' : undefined}
                   />
                   {errors.password && (
-                    <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">
+                    <p 
+                      id="password-error" 
+                      className="mt-1" 
+                      role="alert"
+                      style={{
+                        fontSize: typography.fontSize.sm,
+                        color: colors.error[600],
+                      }}
+                    >
                       {errors.password.message}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div style={{ paddingTop: spacing[2] }}>
                 <Button
                   type="submit"
                   disabled={loading}

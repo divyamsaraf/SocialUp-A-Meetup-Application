@@ -3,6 +3,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { commentService } from '../../services/comment.service';
 import { formatDistanceToNow } from 'date-fns';
 import ErrorMessage from '../common/ErrorMessage';
+import Button from '../ui/Button';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
+import { borderRadius } from '../../theme';
+import { shadows } from '../../theme';
+import { inputs } from '../../theme';
 
 const CommentSection = ({ eventId }) => {
   const { isAuthenticated, user } = useAuth();
@@ -57,37 +64,68 @@ const CommentSection = ({ eventId }) => {
   };
 
   if (loading) {
-    return <div className="mt-6">Loading comments...</div>;
+    return (
+      <div style={{ marginTop: spacing[6] }}>
+        <p style={{ color: colors.text.tertiary }}>Loading comments...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="mt-6">
-      <h2 className="text-xl font-semibold mb-4">Comments ({comments.length})</h2>
+    <div style={{ marginTop: spacing[6] }}>
+      <h2 
+        style={{
+          fontSize: typography.fontSize.xl,
+          fontWeight: typography.fontWeight.semibold,
+          color: colors.text.primary,
+          marginBottom: spacing[4],
+        }}
+      >
+        Comments ({comments.length})
+      </h2>
 
       {error && <ErrorMessage message={error} />}
 
       {isAuthenticated && (
-        <form onSubmit={handleSubmit} className="mb-6">
+        <form onSubmit={handleSubmit} style={{ marginBottom: spacing[6] }}>
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             rows="3"
-            className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="w-full focus:outline-none focus:ring-2 resize-none"
+            style={{
+              ...inputs.base,
+              ...inputs.size.md,
+              ...inputs.state.default,
+              borderRadius: borderRadius.md,
+              marginBottom: spacing[2],
+            }}
+            onFocus={(e) => {
+              e.target.style.border = `2px solid ${colors.border.focus}`;
+              e.target.style.boxShadow = `0 0 0 3px ${colors.primary[100]}`;
+            }}
+            onBlur={(e) => {
+              e.target.style.border = `1px solid ${colors.border.default}`;
+              e.target.style.boxShadow = 'none';
+            }}
           />
-          <button
+          <Button
             type="submit"
             disabled={submitting || !newComment.trim()}
-            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            isLoading={submitting}
+            size="sm"
           >
-            {submitting ? 'Posting...' : 'Post Comment'}
-          </button>
+            Post Comment
+          </Button>
         </form>
       )}
 
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-gray-500">No comments yet. Be the first to comment!</p>
+          <p style={{ color: colors.text.tertiary }}>
+            No comments yet. Be the first to comment!
+          </p>
         ) : (
           comments.map((comment) => {
             const commentUser = comment.userId;
@@ -96,30 +134,63 @@ const CommentSection = ({ eventId }) => {
             );
 
             return (
-              <div key={comment._id} className="bg-gray-50 rounded-lg p-4">
+              <div 
+                key={comment._id} 
+                style={{
+                  backgroundColor: colors.background.tertiary,
+                  borderRadius: borderRadius.lg,
+                  padding: spacing[4],
+                }}
+              >
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
+                  <div className="flex items-start flex-1" style={{ gap: spacing[3] }}>
                     <img
                       src={commentUser?.profile_pic || '/default-avatar.png'}
                       alt={commentUser?.name || 'User'}
-                      className="w-10 h-10 rounded-full"
+                      className="rounded-full"
+                      style={{
+                        width: '2.5rem',
+                        height: '2.5rem',
+                      }}
                     />
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-semibold">
+                      <div className="flex items-center" style={{ gap: spacing[2] }}>
+                        <span 
+                          style={{
+                            fontWeight: typography.fontWeight.semibold,
+                            color: colors.text.primary,
+                          }}
+                        >
                           {commentUser?.name || commentUser?.username || 'Anonymous'}
                         </span>
-                        <span className="text-sm text-gray-500">
+                        <span 
+                          style={{
+                            fontSize: typography.fontSize.sm,
+                            color: colors.text.tertiary,
+                          }}
+                        >
                           {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                         </span>
                       </div>
-                      <p className="mt-1 text-gray-700">{comment.text}</p>
+                      <p 
+                        className="mt-1"
+                        style={{
+                          color: colors.text.secondary,
+                          marginTop: spacing[1],
+                        }}
+                      >
+                        {comment.text}
+                      </p>
                     </div>
                   </div>
                   {canDelete && (
                     <button
                       onClick={() => handleDelete(comment._id)}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      style={{
+                        color: colors.error[600],
+                        fontSize: typography.fontSize.sm,
+                      }}
+                      className="hover:opacity-80"
                     >
                       Delete
                     </button>

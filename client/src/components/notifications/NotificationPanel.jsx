@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { notificationService } from '../../services/notification.service';
 import Loading from '../common/Loading';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
+import { borderRadius } from '../../theme';
+import { shadows } from '../../theme';
+import { zIndex } from '../../theme';
 
 const NotificationPanel = ({ onClose, onNotificationRead }) => {
   const [notifications, setNotifications] = useState([]);
@@ -92,21 +98,54 @@ const NotificationPanel = ({ onClose, onNotificationRead }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-        <div className="flex space-x-2">
+    <div 
+      className="absolute right-0 flex flex-col overflow-hidden"
+      style={{
+        marginTop: spacing[2],
+        width: '24rem',
+        backgroundColor: colors.surface.default,
+        borderRadius: borderRadius.lg,
+        boxShadow: shadows.xl,
+        border: `1px solid ${colors.border.default}`,
+        zIndex: zIndex.modal,
+        maxHeight: '24rem',
+      }}
+    >
+      <div 
+        className="flex items-center justify-between"
+        style={{
+          padding: spacing[4],
+          borderBottom: `1px solid ${colors.border.default}`,
+        }}
+      >
+        <h3 
+          style={{
+            fontSize: typography.fontSize.lg,
+            fontWeight: typography.fontWeight.semibold,
+            color: colors.text.primary,
+          }}
+        >
+          Notifications
+        </h3>
+        <div className="flex" style={{ gap: spacing[2] }}>
           {notifications.some(n => !n.read) && (
             <button
               onClick={handleMarkAllAsRead}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: colors.primary[600],
+              }}
+              className="hover:opacity-80"
             >
               Mark all read
             </button>
           )}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            style={{
+              color: colors.text.tertiary,
+            }}
+            className="hover:opacity-80"
             aria-label="Close"
           >
             ✕
@@ -116,24 +155,48 @@ const NotificationPanel = ({ onClose, onNotificationRead }) => {
 
       <div className="overflow-y-auto flex-1">
         {loading ? (
-          <div className="p-4">
+          <div style={{ padding: spacing[4] }}>
             <Loading />
           </div>
         ) : error ? (
-          <div className="p-4 text-red-600">{error}</div>
+          <div 
+            style={{
+              padding: spacing[4],
+              color: colors.error[600],
+            }}
+          >
+            {error}
+          </div>
         ) : notifications.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">No notifications</div>
+          <div 
+            style={{
+              padding: spacing[4],
+              textAlign: 'center',
+              color: colors.text.tertiary,
+            }}
+          >
+            No notifications
+          </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div style={{ borderTop: `1px solid ${colors.border.light}` }}>
             {notifications.map((notification) => (
               <div
                 key={notification._id}
-                className={`p-4 hover:bg-gray-50 ${
-                  !notification.read ? 'bg-blue-50' : ''
-                }`}
+                className="hover:opacity-90"
+                style={{
+                  padding: spacing[4],
+                  backgroundColor: !notification.read ? colors.primary[50] : 'transparent',
+                  borderBottom: `1px solid ${colors.border.light}`,
+                }}
               >
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 text-2xl mr-3">
+                  <div 
+                    className="flex-shrink-0"
+                    style={{
+                      fontSize: typography.fontSize['2xl'],
+                      marginRight: spacing[3],
+                    }}
+                  >
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -147,27 +210,56 @@ const NotificationPanel = ({ onClose, onNotificationRead }) => {
                       }}
                       className="block"
                     >
-                      <p className="text-sm font-medium text-gray-900">
+                      <p 
+                        style={{
+                          fontSize: typography.fontSize.sm,
+                          fontWeight: typography.fontWeight.medium,
+                          color: colors.text.primary,
+                        }}
+                      >
                         {notification.title}
                       </p>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p 
+                        style={{
+                          fontSize: typography.fontSize.sm,
+                          color: colors.text.secondary,
+                          marginTop: spacing[1],
+                        }}
+                      >
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p 
+                        style={{
+                          fontSize: typography.fontSize.xs,
+                          color: colors.text.tertiary,
+                          marginTop: spacing[1],
+                        }}
+                      >
                         {new Date(notification.createdAt).toLocaleString()}
                       </p>
                     </Link>
                   </div>
-                  <div className="flex-shrink-0 ml-2">
+                  <div className="flex-shrink-0" style={{ marginLeft: spacing[2] }}>
                     {!notification.read && (
-                      <div className="h-2 w-2 bg-blue-600 rounded-full"></div>
+                      <div 
+                        style={{
+                          height: '0.5rem',
+                          width: '0.5rem',
+                          backgroundColor: colors.primary[600],
+                          borderRadius: '50%',
+                        }}
+                      />
                     )}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         handleDelete(notification._id);
                       }}
-                      className="ml-2 text-gray-400 hover:text-red-600"
+                      style={{
+                        marginLeft: spacing[2],
+                        color: colors.text.tertiary,
+                      }}
+                      className="hover:text-red-600"
                       aria-label="Delete"
                     >
                       ×

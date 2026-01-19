@@ -1,4 +1,10 @@
 import { forwardRef } from 'react';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
+import { borderRadius } from '../../theme';
+import { shadows } from '../../theme';
+import { zIndex } from '../../theme';
 
 /**
  * SuggestionList - Displays search suggestions with highlighted matches
@@ -33,11 +39,30 @@ const SuggestionList = forwardRef(({
     
     return parts.map((part, index) => 
       regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 font-semibold">{part}</mark>
+        <mark 
+          key={index} 
+          style={{
+            backgroundColor: colors.warning[200],
+            fontWeight: typography.fontWeight.semibold,
+          }}
+        >
+          {part}
+        </mark>
       ) : (
         part
       )
     );
+  };
+
+  const dropdownStyle = {
+    position: 'absolute',
+    zIndex: zIndex.modal,
+    width: '100%',
+    marginTop: spacing[1],
+    backgroundColor: colors.surface.default,
+    border: `1px solid ${colors.border.default}`,
+    borderRadius: borderRadius.lg,
+    boxShadow: shadows.xl,
   };
 
   if (loading) {
@@ -45,11 +70,20 @@ const SuggestionList = forwardRef(({
       <div
         ref={ref}
         id={id}
-        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg"
+        style={dropdownStyle}
         role="listbox"
         aria-label="Search suggestions"
       >
-        <div className="px-4 py-3 text-sm text-gray-500 text-center">Searching...</div>
+        <div 
+          style={{
+            padding: `${spacing[3]} ${spacing[4]}`,
+            fontSize: typography.fontSize.sm,
+            color: colors.text.tertiary,
+            textAlign: 'center',
+          }}
+        >
+          Searching...
+        </div>
       </div>
     );
   }
@@ -59,11 +93,20 @@ const SuggestionList = forwardRef(({
       <div
         ref={ref}
         id={id}
-        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg"
+        style={dropdownStyle}
         role="listbox"
         aria-label="Search suggestions"
       >
-        <div className="px-4 py-3 text-sm text-gray-500 text-center">No results found</div>
+        <div 
+          style={{
+            padding: `${spacing[3]} ${spacing[4]}`,
+            fontSize: typography.fontSize.sm,
+            color: colors.text.tertiary,
+            textAlign: 'center',
+          }}
+        >
+          No results found
+        </div>
       </div>
     );
   }
@@ -72,7 +115,11 @@ const SuggestionList = forwardRef(({
     <div
       ref={ref}
       id={id}
-      className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+      style={{
+        ...dropdownStyle,
+        maxHeight: '16rem',
+        overflowY: 'auto',
+      }}
       role="listbox"
       aria-label="Search suggestions"
     >
@@ -81,15 +128,40 @@ const SuggestionList = forwardRef(({
           key={suggestion.id || suggestion._id || index}
           type="button"
           onClick={() => onSelect(suggestion)}
-          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+          className="w-full text-left transition-colors hover:opacity-90"
+          style={{
+            padding: `${spacing[2.5]} ${spacing[4]}`,
+            borderBottom: index < suggestions.length - 1 ? `1px solid ${colors.border.light}` : 'none',
+            backgroundColor: 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = colors.background.tertiary;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+          }}
           role="option"
           aria-selected="false"
         >
-          <div className="text-sm text-gray-900 font-medium">
+          <div 
+            style={{
+              fontSize: typography.fontSize.sm,
+              color: colors.text.primary,
+              fontWeight: typography.fontWeight.medium,
+            }}
+          >
             {highlightMatch(suggestion.title || suggestion.name || '', query)}
           </div>
           {suggestion.subtitle && (
-            <div className="text-xs text-gray-500 mt-0.5">{suggestion.subtitle}</div>
+            <div 
+              style={{
+                fontSize: typography.fontSize.xs,
+                color: colors.text.tertiary,
+                marginTop: spacing[0.5],
+              }}
+            >
+              {suggestion.subtitle}
+            </div>
           )}
         </button>
       ))}

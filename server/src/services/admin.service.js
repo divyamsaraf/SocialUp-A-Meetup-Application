@@ -30,7 +30,7 @@ const getAllEvents = async (page = 1, limit = 20) => {
   const skip = (page - 1) * limit;
   
   const events = await Event.find()
-    .populate("hostedBy", "name username email")
+    .populate("hostedBy", "name username profile_pic email")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));

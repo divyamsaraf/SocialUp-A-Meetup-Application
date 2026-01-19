@@ -17,12 +17,57 @@ const generateToken = (user) => {
   );
 };
 
+// Generate unique username from email
+const generateUniqueUsername = async (email, baseUsername = null) => {
+  let username = baseUsername;
+  
+  // If no base username provided, generate from email
+  if (!username && email) {
+    const emailPrefix = email.split('@')[0];
+    // Remove non-alphanumeric characters, convert to lowercase
+    const sanitized = emailPrefix.replace(/[^a-z0-9]/gi, '').toLowerCase();
+    // Ensure minimum length
+    username = sanitized.length >= 3 ? sanitized : sanitized + '123';
+  }
+  
+  // Ensure username meets requirements
+  if (!username || username.length < 3) {
+    username = 'user' + Math.floor(Math.random() * 100000);
+  }
+  
+  // Check if username exists, append number if needed
+  let finalUsername = username;
+  let counter = 1;
+  while (await User.findOne({ username: finalUsername })) {
+    finalUsername = `${username}${counter}`;
+    counter++;
+    // Prevent infinite loop
+    if (counter > 10000) {
+      finalUsername = `${username}${Date.now()}`;
+      break;
+    }
+  }
+  
+  return finalUsername;
+};
+
 // Register new user
 const register = async (userData) => {
   // Check if user already exists
   const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
     throw new Error("User with this email already exists");
+  }
+
+  // Generate unique username if not provided
+  if (!userData.username) {
+    userData.username = await generateUniqueUsername(userData.email, userData.username);
+  } else {
+    // Check if provided username is already taken
+    const usernameTaken = await User.findOne({ username: userData.username.toLowerCase().trim() });
+    if (usernameTaken) {
+      throw new Error("Username is already taken");
+    }
   }
 
   // Create user

@@ -99,15 +99,42 @@ const getUserById = async (req, res, next) => {
   }
 };
 
-// Get user's events
+// Get user by username
+const getUserByUsername = async (req, res, next) => {
+  try {
+    const user = await userService.getUserByUsername(req.params.username);
+    res.status(200).json({
+      status: "success",
+      data: { user },
+    });
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+    next(error);
+  }
+};
+
+// Get user's events (username only)
 const getUserEvents = async (req, res, next) => {
   try {
-    const events = await userService.getUserEvents(req.params.id);
+    // Use username from params (route should be /users/:username/events)
+    const username = req.params.username || req.params.id;
+    const events = await userService.getUserEvents(username);
     res.status(200).json({
       status: "success",
       data: { events },
     });
   } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
     next(error);
   }
 };
@@ -151,6 +178,7 @@ module.exports = {
   updateMyProfile,
   uploadAvatar,
   getUserById,
+  getUserByUsername,
   getUserEvents,
   searchUsers,
   getUserGroups,

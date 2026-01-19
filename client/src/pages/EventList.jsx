@@ -10,8 +10,18 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
 import LayoutContainer from '../components/common/LayoutContainer';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import GlobalSearchBar from '../components/common/GlobalSearchBar';
+import CategoryRow from '../components/common/CategoryRow';
+import EventFiltersRow from '../components/common/EventFiltersRow';
+import EventCard from '../components/events/EventCard';
+import { colors } from '../theme';
+import { typography } from '../theme';
+import { spacing } from '../theme';
+import { borderRadius } from '../theme';
+import { shadows } from '../theme';
+import { icons } from '../theme';
+import { cards } from '../theme';
+import { transitions } from '../theme';
 
 /**
  * Events Page - Meetup-inspired design with dynamic categories and compact event cards
@@ -227,37 +237,37 @@ const EventListPage = () => {
 
   // Handle search from GlobalSearchBar
   const handleGlobalSearch = (data) => {
-    // Update search query and filters from GlobalSearchBar
+    // Update search query from GlobalSearchBar
     setSearchQuery(data.query || '');
-    
-    // Update filters from GlobalSearchBar filters
-    if (data.filters) {
-      setFilters(prev => ({
-        ...prev,
-        eventCategory: data.filters.Category || prev.eventCategory,
-        eventLocationType: data.filters.Type || prev.eventLocationType,
-        dateRange: data.filters.Date || prev.dateRange,
-        distance: data.filters.Distance || prev.distance,
-        sortBy: data.filters.Sort || prev.sortBy,
-      }));
-    }
     
     // Update URL params
     setPage(1);
     const params = new URLSearchParams();
     if (data.query) params.set('q', data.query);
-    if (data.filters?.Category) params.set('category', data.filters.Category);
-    if (data.filters?.Type) params.set('locationType', data.filters.Type);
-    if (data.filters?.Date && data.filters.Date !== 'all') params.set('dateRange', data.filters.Date);
-    if (data.filters?.Distance && data.filters.Distance !== '25') params.set('distance', data.filters.Distance);
-    if (data.filters?.Sort && data.filters.Sort !== 'date') params.set('sortBy', data.filters.Sort);
+    // Keep existing filter params
+    if (filters.eventCategory) params.set('category', filters.eventCategory);
+    if (filters.eventLocationType) params.set('locationType', filters.eventLocationType);
+    if (filters.dateRange && filters.dateRange !== 'all') params.set('dateRange', filters.dateRange);
+    if (filters.distance && filters.distance !== '25') params.set('distance', filters.distance);
+    if (filters.sortBy && filters.sortBy !== 'date') params.set('sortBy', filters.sortBy);
     setSearchParams(params);
   };
 
   // Handle filter change
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
     setPage(1);
+    
+    // Update URL params
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (newFilters.eventCategory) params.set('category', newFilters.eventCategory);
+    if (newFilters.eventLocationType) params.set('locationType', newFilters.eventLocationType);
+    if (newFilters.dateRange && newFilters.dateRange !== 'all') params.set('dateRange', newFilters.dateRange);
+    if (newFilters.distance && newFilters.distance !== '25') params.set('distance', newFilters.distance);
+    if (newFilters.sortBy && newFilters.sortBy !== 'date') params.set('sortBy', newFilters.sortBy);
+    setSearchParams(params);
   };
 
   // Handle category click
@@ -280,13 +290,28 @@ const EventListPage = () => {
 
   // Clear all filters
   const clearFilters = () => {
-    setFilters({
+    // Announce reset to screen readers
+    const announcement = document.createElement('div');
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+    announcement.textContent = 'All filters have been reset';
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 1000);
+
+    const defaultFilters = {
       eventCategory: '',
       eventLocationType: '',
       dateRange: 'all',
       distance: '25',
       sortBy: 'date',
-    });
+    };
+    setFilters(defaultFilters);
     setSearchQuery('');
     setPage(1);
     setSearchParams({});
@@ -298,7 +323,10 @@ const EventListPage = () => {
   // Show loading state while location context is initializing
   if (locationContextLoading) {
     return (
-      <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center">
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: colors.background.secondary }}
+      >
         <Loading />
       </div>
     );
@@ -315,110 +343,96 @@ const EventListPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7]">
+    <div 
+      className="min-h-screen"
+      style={{ backgroundColor: colors.background.secondary }}
+    >
       <LayoutContainer>
         {/* Header */}
-        <div className="pt-6 pb-4">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+        <div 
+          style={{
+            paddingTop: spacing[6],
+            paddingBottom: spacing[4],
+          }}
+        >
+          <h1 
+            style={{
+              fontSize: typography.fontSize['3xl'],
+              fontWeight: typography.fontWeight.extrabold,
+              color: colors.text.primary,
+              marginBottom: spacing[2],
+            }}
+          >
             Events near {safeLocation?.label || 'you'}
           </h1>
         </div>
 
         {/* Global Search Bar */}
-        <div className="mb-4">
+        <div style={{ marginBottom: spacing[4] }}>
           <GlobalSearchBar
             searchScope="events"
-            filters={[
-              {
-                name: 'Date',
-                options: [
-                  { value: 'all', label: 'All dates' },
-                  { value: 'today', label: 'Today' },
-                  { value: 'tomorrow', label: 'Tomorrow' },
-                  { value: 'week', label: 'This week' },
-                  { value: 'month', label: 'This month' },
-                ],
-                defaultValue: filters.dateRange,
-              },
-              {
-                name: 'Category',
-                options: categories
-                  .filter(cat => !cat.isSpecial)
-                  .map(cat => ({ value: cat.name, label: cat.name })),
-                defaultValue: filters.eventCategory,
-              },
-              {
-                name: 'Type',
-                options: [
-                  { value: EVENT_LOCATION_TYPES.ONLINE, label: 'Online' },
-                  { value: EVENT_LOCATION_TYPES.IN_PERSON, label: 'In Person' },
-                ],
-                defaultValue: filters.eventLocationType,
-              },
-              ...(selectedLocation?.lat && selectedLocation?.lng ? [{
-                name: 'Distance',
-                options: [
-                  { value: '5', label: 'Within 5 miles' },
-                  { value: '10', label: 'Within 10 miles' },
-                  { value: '25', label: 'Within 25 miles' },
-                  { value: '50', label: 'Within 50 miles' },
-                  { value: '100', label: 'Within 100 miles' },
-                ],
-                defaultValue: filters.distance,
-              }] : []),
-              {
-                name: 'Sort',
-                options: [
-                  { value: 'date', label: 'Sort by date' },
-                  { value: 'popularity', label: 'Sort by popularity' },
-                  { value: 'relevance', label: 'Sort by relevance' },
-                ],
-                defaultValue: filters.sortBy,
-              },
-            ]}
             defaultCity={selectedLocation?.label}
             placeholder="Search events, groups or enter a city"
             onSearch={handleGlobalSearch}
           />
         </div>
 
-        {/* Dynamic Categories Row - Scrollable on Mobile */}
-        <div className="mb-6">
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-2 min-w-max pb-2">
-              {categories.map((category) => {
-                const isActive = category.isSpecial
-                  ? category.specialType === 'all_events' && !filters.eventCategory
-                  : filters.eventCategory === category.name;
-                
-                return (
-                  <button
-                    key={category._id || category.name}
-                    onClick={() => handleCategoryClick(category)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                    }`}
-                    aria-pressed={isActive}
-                  >
-                    <span>{category.icon}</span>
-                    <span>{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        {/* Event Filters Row - All filters in a single horizontal row */}
+        {/* Note: Category filter removed - categories handled by CategoryRow below */}
+        <EventFiltersRow
+          selectedFilters={{
+            dateRange: filters.dateRange || 'all',
+            eventLocationType: filters.eventLocationType || '',
+            distance: filters.distance || '25',
+            sortBy: filters.sortBy || 'date',
+          }}
+          onFilterChange={handleFilterChange}
+          onReset={clearFilters}
+          showDistance={!!(selectedLocation?.lat && selectedLocation?.lng)}
+        />
+
+        {/* Category Row - Dynamic, scrollable categories with arrows */}
+        <CategoryRow
+          categories={categories.map(cat => ({
+            id: cat.isSpecial && cat.specialType === 'all_events' ? 'all_events' : cat.name,
+            name: cat.name,
+            label: cat.name,
+            icon: cat.icon,
+            isSpecial: cat.isSpecial,
+            specialType: cat.specialType,
+          }))}
+          selectedCategoryId={
+            filters.eventCategory 
+              ? filters.eventCategory 
+              : (categories.find(cat => cat.isSpecial && cat.specialType === 'all_events') ? 'all_events' : '')
+          }
+          onCategorySelect={handleCategoryClick}
+          ariaLabel="Event category filters"
+          showArrowsOnMobile={false}
+        />
 
         {/* Events Grid */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
+          <div 
+            className="flex items-center justify-between"
+            style={{ marginBottom: spacing[4] }}
+          >
+            <h2 
+              style={{
+                fontSize: typography.fontSize.xl,
+                fontWeight: typography.fontWeight.bold,
+                color: colors.text.primary,
+              }}
+            >
               {searchQuery ? `Search results` : 'Events'}
             </h2>
             {pagination && (
-              <p className="text-sm text-gray-600">
+              <p 
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: colors.text.secondary,
+                }}
+              >
                 {pagination.total} {pagination.total === 1 ? 'event' : 'events'}
               </p>
             )}
@@ -438,15 +452,24 @@ const EventListPage = () => {
             />
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+              <div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                style={{
+                  gap: spacing[4],
+                  marginBottom: spacing[6],
+                }}
+              >
                 {events.filter(event => event && event._id).map((event) => (
-                  <CompactEventCard key={event._id} event={event} />
+                  <EventCard key={event._id} event={event} variant="compact" />
                 ))}
               </div>
 
               {/* Pagination */}
               {pagination && pagination.pages > 1 && (
-                <div className="flex justify-center items-center gap-2">
+                <div 
+                  className="flex justify-center items-center"
+                  style={{ gap: spacing[2] }}
+                >
                   <Button
                     variant="outline"
                     size="sm"
@@ -455,7 +478,14 @@ const EventListPage = () => {
                   >
                     Previous
                   </Button>
-                  <span className="text-sm text-gray-600 px-4">
+                  <span 
+                    style={{
+                      fontSize: typography.fontSize.sm,
+                      color: colors.text.secondary,
+                      paddingLeft: spacing[4],
+                      paddingRight: spacing[4],
+                    }}
+                  >
                     Page {page} of {pagination.pages}
                   </span>
                   <Button
@@ -476,113 +506,5 @@ const EventListPage = () => {
   );
 };
 
-/**
- * Compact Event Card - Meetup-style design
- * Reduced padding/margins while maintaining readability
- */
-const CompactEventCard = ({ event }) => {
-  // Safety check
-  if (!event) {
-    return null;
-  }
-
-  const isOnline = event.eventLocationType === 'online';
-  const eventDate = event.dateAndTime ? new Date(event.dateAndTime) : new Date();
-  const city = event.location?.city;
-  const state = event.location?.state;
-  const distanceMiles = event.distanceMiles;
-  const attendeeCount = event.attendees?.length || 0;
-  const hostName = event.hostedBy?.name || 'Host';
-  const groupName = event.groupDetail?.groupName;
-
-  const getDateLabel = () => {
-    if (isToday(eventDate)) return 'Today';
-    if (isTomorrow(eventDate)) return 'Tomorrow';
-    return format(eventDate, 'EEE, MMM d');
-  };
-
-  const timeLabel = format(eventDate, 'h:mm a');
-
-  if (!event._id) {
-    console.warn('Event missing _id:', event);
-    return null;
-  }
-
-  return (
-    <Card hover clickable className="h-full">
-      <Link to={`/events/${event._id}`} className="block h-full">
-        {/* Event Image - Compact */}
-        {event.eventImage ? (
-          <div className="w-full h-32 bg-gray-200 rounded-t-lg overflow-hidden">
-            <img
-              src={event.eventImage}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center">
-            <span className="text-3xl">{event.eventCategory?.[0] || '📅'}</span>
-          </div>
-        )}
-
-        <div className="p-3">
-          {/* Date & Time - Compact */}
-          <div className="text-xs font-semibold text-blue-600 mb-1">
-            {getDateLabel()} · {timeLabel}
-          </div>
-
-          {/* Title - Compact */}
-          <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 leading-snug">
-            {event.title}
-          </h3>
-
-          {/* Location - Compact */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
-            {isOnline ? (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span>Online</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="truncate">
-                  {city && state ? `${city}, ${state}` : city || state || 'Location TBD'}
-                  {distanceMiles != null && ` · ${distanceMiles} mi`}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Group Name - Compact */}
-          {groupName && (
-            <div className="text-xs text-blue-600 mb-2 truncate">
-              {groupName}
-            </div>
-          )}
-
-          {/* Footer - Compact */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-1 text-xs text-gray-600">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>{attendeeCount}</span>
-            </div>
-            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-              Free
-            </span>
-          </div>
-        </div>
-      </Link>
-    </Card>
-  );
-};
 
 export default EventListPage;

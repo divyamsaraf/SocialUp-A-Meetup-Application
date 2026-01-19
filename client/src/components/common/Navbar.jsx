@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationBell from '../notifications/NotificationBell';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
+import { shadows } from '../../theme';
+import { zIndex } from '../../theme';
+import { transitions } from '../../theme';
+import { breakpoints } from '../../theme';
+import { icons } from '../../theme';
+import { borderRadius } from '../../theme';
+import { buttons } from '../../theme';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -44,13 +54,40 @@ const Navbar = () => {
   return (
     <>
       {/* Full-width navbar wrapper */}
-      <nav className={`w-full bg-white ${isScrolled ? 'shadow-md' : 'border-b border-gray-200'} sticky top-0 z-50 transition-all duration-200`}>
-        <div className="max-w-[1320px] mx-auto px-4 sm:px-6">
+      <nav 
+        className="w-full sticky top-0 transition-all"
+        style={{
+          backgroundColor: colors.surface.default,
+          boxShadow: isScrolled ? shadows.md : 'none',
+          borderBottom: isScrolled ? 'none' : `1px solid ${colors.border.default}`,
+          zIndex: zIndex.component.navbar,
+          transition: transitions.preset.default,
+        }}
+      >
+        <div 
+          className="mx-auto"
+          style={{
+            maxWidth: breakpoints.container['2xl'],
+            paddingLeft: spacing[4],
+            paddingRight: spacing[4],
+          }}
+        >
           <div className="flex justify-between items-center h-[60px]">
           {/* Left Section: Logo + Primary Nav */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">SocialUp</span>
+              <span 
+                className="transition-colors"
+                style={{
+                  fontSize: typography.fontSize['2xl'],
+                  fontWeight: typography.fontWeight.bold,
+                  color: colors.primary[600],
+                }}
+                onMouseEnter={(e) => e.target.style.color = colors.primary[700]}
+                onMouseLeave={(e) => e.target.style.color = colors.primary[600]}
+              >
+                SocialUp
+              </span>
             </Link>
             
             {/* Desktop Nav Links */}
@@ -85,7 +122,25 @@ const Navbar = () => {
                 {/* Desktop: Create Event CTA */}
                 <Link
                   to="/events/create"
-                  className="hidden md:inline-flex items-center justify-center px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  className="hidden md:inline-flex items-center justify-center rounded-full transition-all transform hover:-translate-y-0.5"
+                  style={{
+                    padding: buttons.size.sm.padding,
+                    backgroundColor: colors.primary[600],
+                    color: colors.text.inverse,
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.semibold,
+                    borderRadius: borderRadius.component.button,
+                    boxShadow: shadows.sm,
+                    transition: transitions.preset.button,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = colors.primary[700];
+                    e.target.style.boxShadow = shadows.md;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = colors.primary[600];
+                    e.target.style.boxShadow = shadows.sm;
+                  }}
                 >
                   Create Event
                 </Link>
@@ -96,17 +151,24 @@ const Navbar = () => {
                 </div>
 
                 {/* User Profile */}
-                <Link
-                  to={`/profile/${user?._id}`}
-                  className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  <img
-                    src={user?.profile_pic || '/default-avatar.png'}
-                    alt={user?.name || 'User'}
-                    className="h-8 w-8 rounded-full border-2 border-gray-200 hover:border-blue-500 transition-colors"
-                  />
-                  <span className="text-sm font-medium">{user?.name || user?.username}</span>
-                </Link>
+                {isAuthenticated && user && (
+                  <Link
+                    to={`/profile/${user.username}`}
+                    className="hidden md:flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+                    aria-label={`View ${user?.name || user?.username || 'your'} profile`}
+                  >
+                    <img
+                      src={user?.profile_pic || '/default-avatar.png'}
+                      alt={user?.name || user?.username || 'User'}
+                      className="h-8 w-8 rounded-full border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                      onError={(e) => {
+                        // Fallback to default avatar if image fails to load
+                        e.target.src = '/default-avatar.png';
+                      }}
+                    />
+                    <span className="text-sm font-medium">{user?.name || user?.username || 'Profile'}</span>
+                  </Link>
+                )}
 
                 {/* Logout Button */}
                 <button
@@ -142,7 +204,25 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center rounded-full transition-all transform hover:-translate-y-0.5"
+                  style={{
+                    padding: buttons.size.sm.padding,
+                    backgroundColor: colors.primary[600],
+                    color: colors.text.inverse,
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.semibold,
+                    borderRadius: borderRadius.component.button,
+                    boxShadow: shadows.sm,
+                    transition: transitions.preset.button,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = colors.primary[700];
+                    e.target.style.boxShadow = shadows.md;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = colors.primary[600];
+                    e.target.style.boxShadow = shadows.sm;
+                  }}
                 >
                   Sign up
                 </Link>
@@ -170,17 +250,28 @@ const Navbar = () => {
 
       {/* Mobile Menu Drawer with Backdrop */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 md:hidden transition-opacity ${
           isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+        style={{
+          backgroundColor: colors.overlay.backdrop,
+          zIndex: zIndex.modalBackdrop,
+          transition: `opacity ${transitions.duration.slow} ${transitions.easing.easeInOut}`,
+        }}
         onClick={() => setIsMobileMenuOpen(false)}
       />
       
       {/* Slide-in Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-80 bg-white z-50 shadow-2xl md:hidden transform transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 h-full w-80 md:hidden transform ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{
+          backgroundColor: colors.surface.default,
+          zIndex: zIndex.modal,
+          boxShadow: shadows['2xl'],
+          transition: `transform ${transitions.duration.slow} ${transitions.easing.easeOut}`,
+        }}
       >
             <div className="h-full flex flex-col">
               {/* Drawer Header */}
@@ -199,20 +290,25 @@ const Navbar = () => {
 
               {/* Drawer Content */}
               <div className="flex-1 overflow-y-auto p-6">
-                {isAuthenticated && (
+                {isAuthenticated && user && (
                   <div className="mb-6 pb-6 border-b border-gray-200">
                     <Link
-                      to={`/profile/${user?._id}`}
+                      to={`/profile/${user.username}`}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-3"
+                      aria-label={`View ${user?.name || user?.username || 'your'} profile`}
                     >
                       <img
                         src={user?.profile_pic || '/default-avatar.png'}
-                        alt={user?.name || 'User'}
+                        alt={user?.name || user?.username || 'User'}
                         className="h-12 w-12 rounded-full"
+                        onError={(e) => {
+                          // Fallback to default avatar if image fails to load
+                          e.target.src = '/default-avatar.png';
+                        }}
                       />
                       <div>
-                        <div className="font-semibold text-gray-900">{user?.name || user?.username}</div>
+                        <div className="font-semibold text-gray-900">{user?.name || user?.username || 'Profile'}</div>
                         <div className="text-sm text-gray-500">View profile</div>
                       </div>
                     </Link>

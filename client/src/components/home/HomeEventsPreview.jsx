@@ -6,6 +6,10 @@ import EventCard from '../events/EventCard';
 import Loading from '../common/Loading';
 import ErrorMessage from '../common/ErrorMessage';
 import EmptyState from '../common/EmptyState';
+import { colors } from '../../theme';
+import { typography } from '../../theme';
+import { spacing } from '../../theme';
+import { icons } from '../../theme';
 
 const HomeEventsPreview = ({ onLocationEdit }) => {
   const { selectedLocation, loading: locationLoading } = useLocation();
@@ -64,23 +68,44 @@ const HomeEventsPreview = ({ onLocationEdit }) => {
 
   if (events.length === 0) {
     return (
-      <section className="mt-16">
-        <div className="flex items-baseline gap-2 mb-6">
-          <span className="text-lg text-gray-600 font-normal">
+      <section style={{ marginTop: spacing[16] }}>
+        <div className="flex items-baseline" style={{ gap: spacing[2], marginBottom: spacing[6] }}>
+          <span 
+            style={{
+              fontSize: typography.fontSize.lg,
+              color: colors.text.secondary,
+              fontWeight: typography.fontWeight.normal,
+            }}
+          >
             Events near
           </span>
           <button
             onClick={handleLocationClick}
-            className="group flex items-center gap-1 text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+            className="group flex items-center hover:opacity-80"
+            style={{ gap: spacing[1] }}
           >
-            <span>{locationLabel}</span>
+            <span 
+              style={{
+                fontSize: typography.fontSize['2xl'],
+                fontWeight: typography.fontWeight.bold,
+                color: colors.text.primary,
+              }}
+            >
+              {locationLabel}
+            </span>
             <svg 
-              className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" 
+              className="opacity-60 group-hover:opacity-100 transition-opacity" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
+              style={{
+                width: icons.size.sm,
+                height: icons.size.sm,
+                strokeWidth: icons.strokeWidth.normal,
+                color: colors.primary[600],
+              }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
         </div>
@@ -96,38 +121,75 @@ const HomeEventsPreview = ({ onLocationEdit }) => {
   }
 
   return (
-    <section className="mt-16">
-      <div className="flex items-baseline justify-between mb-6">
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg text-gray-600 font-normal">
+    <section style={{ marginTop: spacing[16] }}>
+      <div className="flex items-baseline justify-between" style={{ marginBottom: spacing[6] }}>
+        <div className="flex items-baseline" style={{ gap: spacing[2] }}>
+          <span 
+            style={{
+              fontSize: typography.fontSize.lg,
+              color: colors.text.secondary,
+              fontWeight: typography.fontWeight.normal,
+            }}
+          >
             Events near
           </span>
           <button
             onClick={handleLocationClick}
-            className="group flex items-center gap-1 text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+            className="group flex items-center hover:opacity-80"
+            style={{ gap: spacing[1] }}
           >
-            <span>{locationLabel}</span>
+            <span 
+              style={{
+                fontSize: typography.fontSize['2xl'],
+                fontWeight: typography.fontWeight.bold,
+                color: colors.text.primary,
+              }}
+            >
+              {locationLabel}
+            </span>
             <svg 
-              className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" 
+              className="opacity-60 group-hover:opacity-100 transition-opacity" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
+              style={{
+                width: icons.size.sm,
+                height: icons.size.sm,
+                strokeWidth: icons.strokeWidth.normal,
+                color: colors.primary[600],
+              }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
         </div>
         <Link 
           to="/events" 
-          className="text-blue-600 hover:text-blue-700 text-base font-medium flex items-center gap-1 group"
+          className="flex items-center group hover:opacity-80"
+          style={{
+            color: colors.primary[600],
+            fontSize: typography.fontSize.base,
+            fontWeight: typography.fontWeight.medium,
+            gap: spacing[1],
+          }}
         >
           See all events
-          <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg 
+            className="transform group-hover:translate-x-1 transition-transform" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            style={{
+              width: icons.size.sm,
+              height: icons.size.sm,
+              strokeWidth: icons.strokeWidth.normal,
+            }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: spacing[4] }}>
         {events.map((event) => (
           <EventCard key={event._id} event={event} />
         ))}

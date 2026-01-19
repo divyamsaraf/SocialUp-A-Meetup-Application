@@ -1,28 +1,61 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/user.service';
 import { eventService } from '../services/event.service';
-import { format, isToday, isTomorrow, isPast } from 'date-fns';
+import { isPast } from 'date-fns';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
 import LayoutContainer from '../components/common/LayoutContainer';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import EventCard from '../components/events/EventCard';
+import { colors } from '../theme';
+import { typography } from '../theme';
+import { spacing } from '../theme';
+import { borderRadius } from '../theme';
+import { shadows } from '../theme';
+import { icons } from '../theme';
 
 /**
  * Profile Page - Modern design with edit functionality and comprehensive event lists
+ * 
+ * Routing:
+ * - Route: /profile/:username
+ * - Uses useParams() to extract username from route
+ * - Fetches user data dynamically based on username route param
+ * - Works on both SPA navigation and page refresh
+ * 
+ * Data Fetching:
+ * - API: GET /api/users/username/:username
+ * - Fetches user profile data when username changes
+ * - Handles own profile (uses getProfile) vs other profiles (uses getUserByUsername)
+ * - Fetches user events after profile loads
+ * 
+ * State Management:
+ * - user: user data object
+ * - loading: boolean for initial load
+ * - eventsLoading: boolean for events fetch
+ * - error: string for error messages
+ * 
+ * Error Handling:
+ * - 404 → shows "User not found" with link to homepage
+ * - Network error → shows retry option
+ * - Invalid username → friendly 404 message
  * 
  * Features:
  * - Hero section with profile picture and edit button
  * - Tabs for Created Events, RSVPed Events, and Past Events
  * - Modern event cards matching Events page design
  * - Responsive layout
+ * - Accessibility: ARIA labels, keyboard navigation, screen reader announcements
+ * - Loading states with skeletons/spinners
+ * - Empty states with friendly messages
  */
 const Profile = () => {
-  const { id } = useParams();
-  const { user: currentUser } = useAuth();
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const { user: currentUser, loading: authLoading } = useAuth();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('created'); // 'created', 'rsvped', 'past'
   const [createdEvents, setCreatedEvents] = useState([]);
@@ -32,56 +65,175 @@ const Profile = () => {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const isOwnProfile = currentUser?._id === id;
-
+  // Fetch user profile data - triggered when username changes
+  // Wait for AuthContext to finish loading before fetching profile
   useEffect(() => {
+    // Don't fetch if username is not available yet
+    if (!username) return;
+    
+    // Wait for AuthContext to finish loading before fetching profile
+    // This prevents "Resource not found" errors when navigating via SPA
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+    
+    // Fetch profile once auth context is ready
     fetchProfile();
-  }, [id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, currentUser?._id, currentUser?.username, authLoading]);
 
   // Fetch user profile data
   const fetchProfile = async () => {
     try {
       setLoading(true);
       setError('');
-      const userRes = isOwnProfile 
-        ? await userService.getProfile() 
-        : await userService.getUserById(id);
       
-      // Handle different response structures
-      const userData = userRes.data?.user || userRes.data?.data?.user || userRes.user;
-      if (!userData) {
+      // Announce loading to screen readers
+      const loadingAnnouncement = document.createElement('div');
+      loadingAnnouncement.setAttribute('role', 'status');
+      loadingAnnouncement.setAttribute('aria-live', 'polite');
+      loadingAnnouncement.className = 'sr-only';
+      loadingAnnouncement.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+      loadingAnnouncement.textContent = 'Loading profile';
+      document.body.appendChild(loadingAnnouncement);
+      
+      // Check if param is a MongoDB ObjectId (24 hex characters) - indicates old ID URL
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(username);
+      
+      // If it's an ObjectId, redirect to username-based URL (backward compatibility)
+      // This handles old /profile/:id URLs and redirects them to /profile/:username
+      if (isObjectId) {
+        try {
+          // Try to fetch user by ID to get username for redirect
+          const userById = await userService.getUserById(username);
+          const userData = userById?.data?.user || userById?.user || userById?.data || userById;
+          
+          if (userData?.username) {
+            // Redirect to username-based URL (client-side redirect, no page reload)
+            // Using replace: true to replace history entry (no back button issues)
+            navigate(`/profile/${userData.username}`, { replace: true });
+            // The navigate will update the URL param, causing useEffect to re-run
+            // with the new username, which will then fetch by username
+            if (document.body.contains(loadingAnnouncement)) {
+              document.body.removeChild(loadingAnnouncement);
+            }
+            setLoading(false); // Clear loading state
+            return; // Exit early - useEffect will re-run with new username
+          }
+        } catch (redirectError) {
+          // If user not found by ID, fall through to show 404
+          console.error('User not found by ID (old URL):', redirectError);
+        }
+      }
+      
+      // Determine if this is the current user's profile
+      const isOwnProfileCheck = currentUser && currentUser.username && currentUser.username === username;
+      
+      let userRes;
+      if (isOwnProfileCheck && currentUser) {
+        // Use getProfile for own profile
+        try {
+          userRes = await userService.getProfile();
+        } catch (profileError) {
+          // If getProfile fails, try by username
+          userRes = await userService.getUserByUsername(username);
+        }
+      } else {
+        // Not own profile - always use username lookup
+        userRes = await userService.getUserByUsername(username);
+      }
+      
+      // Handle different response structures - try multiple possible formats
+      let userData = null;
+      if (userRes) {
+        userData = userRes.data?.user || userRes.data?.data?.user || userRes.user || userRes.data || userRes;
+      }
+      
+      if (!userData || (!userData._id && !userData.username && !userData.email)) {
+        console.error('Invalid user data received:', userRes);
         throw new Error('User not found');
       }
+      
       setUser(userData);
       
+      // Remove loading announcement
+      if (document.body.contains(loadingAnnouncement)) {
+        document.body.removeChild(loadingAnnouncement);
+      }
+      
       // Fetch events after profile loads
-      if (userData) {
-        await fetchAllEvents();
+      if (userData && userData.username) {
+        // Always use username for fetching events (username is required)
+        await fetchAllEvents(userData.username);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
-      setError(err.response?.data?.message || 'Failed to load profile');
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        username: username,
+        currentUser: currentUser,
+      });
+      
+      // Remove loading announcement if still present
+      const existingAnnouncement = document.querySelector('.sr-only[role="status"]');
+      if (existingAnnouncement && existingAnnouncement.textContent === 'Loading profile') {
+        document.body.removeChild(existingAnnouncement);
+      }
+      
+      // Announce error to screen readers
+      const errorAnnouncement = document.createElement('div');
+      errorAnnouncement.setAttribute('role', 'alert');
+      errorAnnouncement.setAttribute('aria-live', 'assertive');
+      errorAnnouncement.className = 'sr-only';
+      errorAnnouncement.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+      
+      if (err.response?.status === 404 || err.message === 'User not found') {
+        errorAnnouncement.textContent = 'User not found';
+        setError('User not found');
+      } else if (err.response?.status >= 500) {
+        errorAnnouncement.textContent = 'Server error. Please try again later.';
+        setError('Unable to load profile. Try again later.');
+      } else {
+        errorAnnouncement.textContent = err.response?.data?.message || err.message || 'Failed to load profile';
+        setError(err.response?.data?.message || err.message || 'Failed to load profile');
+      }
+      
+      document.body.appendChild(errorAnnouncement);
+      setTimeout(() => {
+        if (document.body.contains(errorAnnouncement)) {
+          document.body.removeChild(errorAnnouncement);
+        }
+      }, 1000);
     } finally {
       setLoading(false);
     }
   };
 
   // Fetch all event types for the user
-  const fetchAllEvents = useCallback(async () => {
-    if (!id) return;
+  const fetchAllEvents = useCallback(async (userIdentifier) => {
+    if (!userIdentifier) return;
     
     try {
       setEventsLoading(true);
       
-      // Fetch created events
-      const createdRes = await userService.getUserEvents(id);
+      // Fetch created events (username is required, identifier should be username)
+      const createdRes = await userService.getUserEvents(userIdentifier);
       // Handle different response structures
       const created = createdRes.data?.events || createdRes.data?.data?.events || createdRes.events || [];
       setCreatedEvents(Array.isArray(created) ? created : []);
       
       // Fetch RSVPed events (events where user is an attendee)
       // Only show RSVPed/Past tabs for own profile
-      if (currentUser?._id === id) {
+      // Check if viewing own profile
+      // Use _id for identity comparison (more reliable than username)
+      // Username can change, _id is permanent
+      const isOwnProfile = currentUser && currentUser._id && userIdentifier && 
+        String(currentUser._id) === String(userIdentifier);
+      
+      if (isOwnProfile && currentUser?._id) {
         try {
           // Fetch all upcoming events and filter client-side
           // Note: In production, consider adding backend endpoint /users/:id/rsvped-events
@@ -118,7 +270,7 @@ const Profile = () => {
     } finally {
       setEventsLoading(false);
     }
-  }, [id, currentUser]);
+  }, [currentUser]);
 
   // Get events for current tab
   const getCurrentEvents = () => {
@@ -148,9 +300,17 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  // Loading state with skeleton/spinner
+  // Show loading if auth is still loading OR profile is loading
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#f7f7f7]">
+      <div 
+        className="min-h-screen"
+        style={{ backgroundColor: colors.background.secondary }}
+        role="status"
+        aria-live="polite"
+        aria-label="Loading profile"
+      >
         <LayoutContainer>
           <Loading />
         </LayoutContainer>
@@ -158,26 +318,44 @@ const Profile = () => {
     );
   }
 
-  if (error && !user) {
+  // Handle error state (network error with retry option)
+  if (error && !user && error !== 'User not found') {
     return (
-      <div className="min-h-screen bg-[#f7f7f7]">
+      <div 
+        className="min-h-screen"
+        style={{ backgroundColor: colors.background.secondary }}
+      >
         <LayoutContainer>
-          <ErrorMessage message={error} />
+          <EmptyState
+            icon="⚠️"
+            title="Unable to load profile"
+            message={error || "Unable to load profile. Please try again later."}
+            actionLabel="Retry"
+            onAction={() => {
+              setError('');
+              fetchProfile();
+            }}
+          />
         </LayoutContainer>
       </div>
     );
   }
 
-  if (!user) {
+  // Handle 404 - User not found
+  if ((error === 'User not found' || (!user && !loading)) && username) {
     return (
-      <div className="min-h-screen bg-[#f7f7f7]">
+      <div 
+        className="min-h-screen"
+        style={{ backgroundColor: colors.background.secondary }}
+      >
         <LayoutContainer>
           <EmptyState
             icon="👤"
             title="User not found"
-            message="The user you're looking for doesn't exist."
+            message="The user you're looking for doesn't exist or may have been deleted."
             actionLabel="Go Home"
             actionHref="/"
+            aria-label="User not found"
           />
         </LayoutContainer>
       </div>
@@ -187,48 +365,124 @@ const Profile = () => {
   const currentEvents = getCurrentEvents();
   const upcomingCreated = createdEvents.filter(e => !isPast(new Date(e.dateAndTime)));
   const pastCreated = createdEvents.filter(e => isPast(new Date(e.dateAndTime)));
+  
+  // Check if viewing own profile for edit button display
+  // Use _id for identity comparison (more reliable than username)
+  // Username is for routing, _id is for identity
+  const isOwnProfile = currentUser && user && 
+    currentUser._id && 
+    user._id && 
+    String(currentUser._id) === String(user._id);
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7]">
+    <div 
+      className="min-h-screen"
+      style={{ backgroundColor: colors.background.secondary }}
+    >
       <LayoutContainer>
         {/* Hero Section */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-32 sm:h-40"></div>
-          <div className="px-6 pb-6 -mt-16 sm:-mt-20">
+        <div 
+          className="overflow-hidden"
+          style={{
+            backgroundColor: colors.surface.default,
+            borderRadius: borderRadius.lg,
+            boxShadow: shadows.md,
+            marginBottom: spacing[6],
+          }}
+        >
+          <div 
+            className="bg-gradient-to-r"
+            style={{
+              background: `linear-gradient(to right, ${colors.primary[500]}, ${colors.primary[600]})`,
+              height: '8rem',
+            }}
+          />
+          <div 
+            style={{
+              paddingLeft: spacing[6],
+              paddingRight: spacing[6],
+              paddingBottom: spacing[6],
+              marginTop: '-4rem',
+            }}
+          >
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
               {/* Profile Picture */}
               <div className="relative">
                 <img
                   src={user.profile_pic || '/default-avatar.png'}
                   alt={user.name || user.username || 'User'}
-                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                  className="rounded-full object-cover"
+                  style={{
+                    width: '6rem',
+                    height: '6rem',
+                    border: `4px solid ${colors.surface.default}`,
+                    boxShadow: shadows.lg,
+                  }}
                 />
               </div>
               
               {/* User Info */}
               <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                <h1 
+                  style={{
+                    fontSize: typography.fontSize['3xl'],
+                    fontWeight: typography.fontWeight.bold,
+                    color: colors.text.primary,
+                    marginBottom: spacing[1],
+                  }}
+                >
                   {user.name || user.username || 'User'}
                 </h1>
                 {user.bio && (
-                  <p className="text-gray-600 mb-3 text-sm sm:text-base">{user.bio}</p>
+                  <p 
+                    style={{
+                      color: colors.text.secondary,
+                      marginBottom: spacing[3],
+                      fontSize: typography.fontSize.base,
+                    }}
+                  >
+                    {user.bio}
+                  </p>
                 )}
                 
                 {/* User Details */}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+                <div 
+                  className="flex flex-wrap mb-4"
+                  style={{
+                    gap: spacing[4],
+                    fontSize: typography.fontSize.sm,
+                    color: colors.text.secondary,
+                  }}
+                >
                   {user.location && (
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <div className="flex items-center" style={{ gap: spacing[1] }}>
+                      <svg 
+                        style={{
+                          width: icons.size.sm,
+                          height: icons.size.sm,
+                        }}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       <span>{user.location}</span>
                     </div>
                   )}
                   {user.email && isOwnProfile && (
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <div className="flex items-center" style={{ gap: spacing[1] }}>
+                      <svg 
+                        style={{
+                          width: icons.size.sm,
+                          height: icons.size.sm,
+                        }}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                       <span>{user.email}</span>
                     </div>
@@ -237,11 +491,17 @@ const Profile = () => {
 
                 {/* Interests */}
                 {user.interests && user.interests.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap" style={{ gap: spacing[2] }}>
                     {user.interests.map((interest, index) => (
                       <span
                         key={index}
-                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs sm:text-sm font-medium"
+                        className="rounded-full font-medium"
+                        style={{
+                          backgroundColor: colors.primary[100],
+                          color: colors.primary[800],
+                          padding: `${spacing[1]} ${spacing[3]}`,
+                          fontSize: typography.fontSize.sm,
+                        }}
                       >
                         {interest}
                       </span>
@@ -252,10 +512,19 @@ const Profile = () => {
 
               {/* Edit Button */}
               {isOwnProfile && (
-                <Link to={`/profile/${id}/edit`}>
+                <Link to={`/profile/${username}/edit`}>
                   <Button variant="secondary" size="sm">
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    <svg 
+                      className="mr-2"
+                      style={{
+                        width: icons.size.sm,
+                        height: icons.size.sm,
+                      }}
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                     Edit Profile
                   </Button>
@@ -266,17 +535,49 @@ const Profile = () => {
         </div>
 
         {/* Events Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div 
+          style={{
+            backgroundColor: colors.surface.default,
+            borderRadius: borderRadius.lg,
+            boxShadow: shadows.md,
+            padding: spacing[6],
+          }}
+        >
           {/* Tabs */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-4" aria-label="Event tabs">
+          <div 
+            style={{
+              borderBottom: `1px solid ${colors.border.default}`,
+              marginBottom: spacing[6],
+            }}
+          >
+            <nav 
+              className="flex"
+              style={{ gap: spacing[4] }}
+              aria-label="Event tabs"
+            >
               <button
                 onClick={() => setActiveTab('created')}
-                className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'created'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className="border-b-2 font-medium transition-colors"
+                style={{
+                  paddingTop: spacing[3],
+                  paddingBottom: spacing[3],
+                  paddingLeft: spacing[1],
+                  fontSize: typography.fontSize.sm,
+                  borderBottomColor: activeTab === 'created' ? colors.primary[600] : 'transparent',
+                  color: activeTab === 'created' ? colors.primary[600] : colors.text.tertiary,
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== 'created') {
+                    e.target.style.color = colors.text.secondary;
+                    e.target.style.borderBottomColor = colors.border.dark;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== 'created') {
+                    e.target.style.color = colors.text.tertiary;
+                    e.target.style.borderBottomColor = 'transparent';
+                  }
+                }}
               >
                 {getTabLabel('created')}
               </button>
@@ -284,21 +585,53 @@ const Profile = () => {
                 <>
                   <button
                     onClick={() => setActiveTab('rsvped')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === 'rsvped'
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className="border-b-2 font-medium transition-colors"
+                    style={{
+                      paddingTop: spacing[3],
+                      paddingBottom: spacing[3],
+                      paddingLeft: spacing[1],
+                      fontSize: typography.fontSize.sm,
+                      borderBottomColor: activeTab === 'rsvped' ? colors.primary[600] : 'transparent',
+                      color: activeTab === 'rsvped' ? colors.primary[600] : colors.text.tertiary,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (activeTab !== 'rsvped') {
+                        e.target.style.color = colors.text.secondary;
+                        e.target.style.borderBottomColor = colors.border.dark;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeTab !== 'rsvped') {
+                        e.target.style.color = colors.text.tertiary;
+                        e.target.style.borderBottomColor = 'transparent';
+                      }
+                    }}
                   >
                     {getTabLabel('rsvped')}
                   </button>
                   <button
                     onClick={() => setActiveTab('past')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === 'past'
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className="border-b-2 font-medium transition-colors"
+                    style={{
+                      paddingTop: spacing[3],
+                      paddingBottom: spacing[3],
+                      paddingLeft: spacing[1],
+                      fontSize: typography.fontSize.sm,
+                      borderBottomColor: activeTab === 'past' ? colors.primary[600] : 'transparent',
+                      color: activeTab === 'past' ? colors.primary[600] : colors.text.tertiary,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (activeTab !== 'past') {
+                        e.target.style.color = colors.text.secondary;
+                        e.target.style.borderBottomColor = colors.border.dark;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeTab !== 'past') {
+                        e.target.style.color = colors.text.tertiary;
+                        e.target.style.borderBottomColor = 'transparent';
+                      }
+                    }}
                   >
                     {getTabLabel('past')}
                   </button>
@@ -309,7 +642,7 @@ const Profile = () => {
 
           {/* Events List */}
           {eventsLoading ? (
-            <div className="py-12">
+            <div style={{ paddingTop: spacing[12], paddingBottom: spacing[12] }}>
               <Loading />
             </div>
           ) : currentEvents.length === 0 ? (
@@ -335,9 +668,12 @@ const Profile = () => {
               actionHref={activeTab === 'created' && isOwnProfile ? '/events/create' : undefined}
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+              style={{ gap: spacing[4] }}
+            >
               {currentEvents.map((event) => (
-                <ProfileEventCard key={event._id} event={event} />
+                <EventCard key={event._id} event={event} variant="profile" />
               ))}
             </div>
           )}
@@ -347,95 +683,5 @@ const Profile = () => {
   );
 };
 
-/**
- * Compact Event Card for Profile Page
- * Matches the modern design from Events page
- */
-const ProfileEventCard = ({ event }) => {
-  const isOnline = event.eventLocationType === 'online';
-  const eventDate = new Date(event.dateAndTime);
-  const city = event.location?.city;
-  const state = event.location?.state;
-  const attendeeCount = event.attendees?.length || 0;
-  const isPastEvent = isPast(eventDate);
-
-  const getDateLabel = () => {
-    if (isToday(eventDate)) return 'Today';
-    if (isTomorrow(eventDate)) return 'Tomorrow';
-    return format(eventDate, 'EEE, MMM d');
-  };
-
-  const timeLabel = format(eventDate, 'h:mm a');
-
-  return (
-    <Card hover clickable className="h-full">
-      <Link to={`/events/${event._id}`} className="block h-full">
-        {/* Event Image */}
-        {event.eventImage ? (
-          <div className="w-full h-32 bg-gray-200 rounded-t-lg overflow-hidden">
-            <img
-              src={event.eventImage}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center">
-            <span className="text-3xl">{event.eventCategory?.[0] || '📅'}</span>
-          </div>
-        )}
-
-        <div className="p-4">
-          {/* Date & Time */}
-          <div className={`text-xs font-semibold mb-1 ${isPastEvent ? 'text-gray-500' : 'text-blue-600'}`}>
-            {getDateLabel()} · {timeLabel}
-          </div>
-
-          {/* Title */}
-          <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 leading-snug">
-            {event.title}
-          </h3>
-
-          {/* Location */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
-            {isOnline ? (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span>Online</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="truncate">
-                  {city && state ? `${city}, ${state}` : city || state || 'Location TBD'}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-1 text-xs text-gray-600">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>{attendeeCount}</span>
-            </div>
-            {isPastEvent && (
-              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                Past
-              </span>
-            )}
-          </div>
-        </div>
-      </Link>
-    </Card>
-  );
-};
 
 export default Profile;

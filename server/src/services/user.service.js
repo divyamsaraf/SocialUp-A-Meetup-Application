@@ -9,6 +9,15 @@ const getUserById = async (userId) => {
   return user.toJSON();
 };
 
+// Get user by username
+const getUserByUsername = async (username) => {
+  const user = await User.findOne({ username: username });
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user.toJSON();
+};
+
 // Update user profile
 const updateProfile = async (userId, updateData) => {
   // Remove password from update data if present (handled separately)
@@ -40,10 +49,17 @@ const updatePassword = async (userId, newPassword) => {
   return user.toJSON();
 };
 
-// Get user's created events
-const getUserEvents = async (userId) => {
+// Get user's created events (username only - no ID support)
+const getUserEvents = async (username) => {
   const Event = require("../models/event.model");
-  const events = await Event.find({ hostedBy: userId })
+  
+  // Always lookup by username (username is required)
+  const user = await User.findOne({ username: username });
+  if (!user) {
+    throw new Error("User not found");
+  }
+  
+  const events = await Event.find({ hostedBy: user._id })
     .select("title dateAndTime eventCategory eventLocationType attendees eventStatus eventImage")
     .sort({ dateAndTime: -1 });
   
@@ -84,6 +100,7 @@ const getUserGroups = async (userId) => {
 
 module.exports = {
   getUserById,
+  getUserByUsername,
   updateProfile,
   updatePassword,
   getUserEvents,

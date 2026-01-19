@@ -1,16 +1,43 @@
+import { colors } from '../../theme';
+import { spacing } from '../../theme';
+import { borderRadius } from '../../theme';
+import { typography } from '../../theme';
+import { icons } from '../../theme';
+
+/**
+ * ErrorMessage Component - Uses theme system for consistent error styling
+ */
 const ErrorMessage = ({ message, onClose }) => {
   if (!message) return null;
 
   return (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+    <div 
+      className="relative mb-4"
+      style={{
+        backgroundColor: colors.error[50],
+        border: `1px solid ${colors.error[400]}`,
+        color: colors.error[700],
+        padding: `${spacing[3]} ${spacing[4]}`,
+        borderRadius: borderRadius.lg,
+      }}
+    >
       <span className="block sm:inline">{message}</span>
       {onClose && (
         <span
-          className="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer"
+          className="absolute top-0 bottom-0 cursor-pointer"
+          style={{
+            right: 0,
+            padding: `${spacing[3]} ${spacing[4]}`,
+          }}
           onClick={onClose}
         >
           <svg
-            className="fill-current h-6 w-6 text-red-500"
+            className="fill-current"
+            style={{
+              width: icons.size.md,
+              height: icons.size.md,
+              color: colors.error[500],
+            }}
             role="button"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"

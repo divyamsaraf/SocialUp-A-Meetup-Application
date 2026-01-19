@@ -10,6 +10,13 @@ import LayoutContainer from '../components/common/LayoutContainer';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import GlobalSearchBar from '../components/common/GlobalSearchBar';
+import CategoryRow from '../components/common/CategoryRow';
+import GroupsFiltersRow from '../components/common/GroupsFiltersRow';
+import { colors } from '../theme';
+import { typography } from '../theme';
+import { spacing } from '../theme';
+import { borderRadius } from '../theme';
+import { shadows } from '../theme';
 
 /**
  * GroupList Page - Modern design matching EventList page structure
@@ -36,13 +43,6 @@ const GroupList = () => {
     category: searchParams.get('category') || '',
     privacy: searchParams.get('privacy') || '',
     sortBy: searchParams.get('sortBy') || 'popularity',
-  });
-  
-  // Track filter state for GlobalSearchBar (maps to filter names used by GlobalSearchBar)
-  const [searchBarFilters, setSearchBarFilters] = useState({
-    Category: searchParams.get('category') || '',
-    Privacy: searchParams.get('privacy') || '',
-    Sort: searchParams.get('sortBy') || 'popularity',
   });
 
   // Default categories fallback function
@@ -136,29 +136,17 @@ const GroupList = () => {
 
   // Handle search from GlobalSearchBar
   const handleGlobalSearch = (data) => {
-    // Update search query and filters from GlobalSearchBar
+    // Update search query from GlobalSearchBar
     setSearchQuery(data.query || '');
-    
-    // Update filters from GlobalSearchBar filters
-    const newFilters = {
-      category: data.filters?.Category || '',
-      privacy: data.filters?.Privacy || '',
-      sortBy: data.filters?.Sort || 'popularity',
-    };
-    setFilters(newFilters);
-    setSearchBarFilters({
-      Category: data.filters?.Category || '',
-      Privacy: data.filters?.Privacy || '',
-      Sort: data.filters?.Sort || 'popularity',
-    });
     
     // Update URL params
     setPage(1);
     const params = new URLSearchParams();
     if (data.query) params.set('q', data.query);
-    if (newFilters.category) params.set('category', newFilters.category);
-    if (newFilters.privacy) params.set('privacy', newFilters.privacy);
-    if (newFilters.sortBy !== 'popularity') params.set('sortBy', newFilters.sortBy);
+    // Keep existing filter params
+    if (filters.category) params.set('category', filters.category);
+    if (filters.privacy) params.set('privacy', filters.privacy);
+    if (filters.sortBy && filters.sortBy !== 'popularity') params.set('sortBy', filters.sortBy);
     setSearchParams(params);
   };
 
@@ -166,19 +154,15 @@ const GroupList = () => {
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    
-    // Update search bar filters state to keep them in sync
-    const filterMap = {
-      category: 'Category',
-      privacy: 'Privacy',
-      sortBy: 'Sort',
-    };
-    setSearchBarFilters(prev => ({
-      ...prev,
-      [filterMap[key]]: value,
-    }));
-    
     setPage(1);
+    
+    // Update URL params
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (newFilters.category) params.set('category', newFilters.category);
+    if (newFilters.privacy) params.set('privacy', newFilters.privacy);
+    if (newFilters.sortBy && newFilters.sortBy !== 'popularity') params.set('sortBy', newFilters.sortBy);
+    setSearchParams(params);
   };
 
   // Handle category click
@@ -195,15 +179,24 @@ const GroupList = () => {
 
   // Clear all filters
   const clearFilters = () => {
+    // Announce reset to screen readers
+    const announcement = document.createElement('div');
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+    announcement.textContent = 'All filters have been reset';
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 1000);
+
     setFilters({
       category: '',
       privacy: '',
       sortBy: 'popularity',
-    });
-    setSearchBarFilters({
-      Category: '',
-      Privacy: '',
-      Sort: 'popularity',
     });
     setSearchQuery('');
     setPage(1);
@@ -215,7 +208,10 @@ const GroupList = () => {
 
   if (loading && groups.length === 0) {
     return (
-      <div className="min-h-screen bg-[#f7f7f7]">
+      <div 
+        className="min-h-screen"
+        style={{ backgroundColor: colors.background.secondary }}
+      >
         <LayoutContainer>
           <Loading />
         </LayoutContainer>
@@ -224,92 +220,100 @@ const GroupList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7]">
+    <div 
+      className="min-h-screen"
+      style={{ backgroundColor: colors.background.secondary }}
+    >
       <LayoutContainer>
         {/* Header */}
-        <div className="pt-6 pb-4">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+        <div 
+          style={{
+            paddingTop: spacing[6],
+            paddingBottom: spacing[4],
+          }}
+        >
+          <h1 
+            style={{
+              fontSize: typography.fontSize['3xl'],
+              fontWeight: typography.fontWeight.extrabold,
+              color: colors.text.primary,
+              marginBottom: spacing[2],
+            }}
+          >
             Groups for your interests
           </h1>
-          <p className="text-gray-600 text-base sm:text-lg">
+          <p 
+            style={{
+              color: colors.text.secondary,
+              fontSize: typography.fontSize.base,
+            }}
+          >
             Find communities to learn, build, and meet people who care about what you do.
           </p>
         </div>
 
         {/* Global Search Bar */}
-        <div className="mb-4">
+        <div style={{ marginBottom: spacing[4] }}>
           <GlobalSearchBar
             searchScope="groups"
-            filters={[
-              {
-                name: 'Category',
-                options: categories
-                  .filter(cat => !cat.isSpecial)
-                  .map(cat => ({ value: cat.name, label: cat.name })),
-                defaultValue: searchBarFilters.Category,
-              },
-              {
-                name: 'Privacy',
-                options: [
-                  { value: 'public', label: 'Public' },
-                  { value: 'private', label: 'Private' },
-                ],
-                defaultValue: searchBarFilters.Privacy,
-              },
-              {
-                name: 'Sort',
-                options: [
-                  { value: 'popularity', label: 'Sort by popularity' },
-                  { value: 'members', label: 'Sort by members' },
-                  { value: 'newest', label: 'Sort by newest' },
-                  { value: 'name', label: 'Sort by name' },
-                ],
-                defaultValue: searchBarFilters.Sort,
-              },
-            ]}
             placeholder="Search groups..."
             onSearch={handleGlobalSearch}
           />
         </div>
 
-        {/* Dynamic Categories Row - Scrollable on Mobile */}
-        <div className="mb-6">
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-2 min-w-max pb-2">
-              {categories.map((category) => {
-                const isActive = category.isSpecial
-                  ? category.specialType === 'all_groups' && !filters.category
-                  : filters.category === category.name;
-                
-                return (
-                  <button
-                    key={category._id || category.name}
-                    onClick={() => handleCategoryClick(category)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                    }`}
-                    aria-pressed={isActive}
-                    aria-label={`Filter by ${category.name}`}
-                  >
-                    <span aria-hidden="true">{category.icon}</span>
-                    <span>{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        {/* Groups Filters Row - All filters in a single horizontal row */}
+        {/* Note: Category filter removed - categories handled by CategoryRow below */}
+        <GroupsFiltersRow
+          selectedFilters={{
+            privacy: filters.privacy || '',
+            sortBy: filters.sortBy || 'popularity',
+          }}
+          onFilterChange={handleFilterChange}
+          onReset={clearFilters}
+        />
+
+        {/* Category Row - Dynamic, scrollable categories with arrows */}
+        <CategoryRow
+          categories={categories.map(cat => ({
+            id: cat.isSpecial && cat.specialType === 'all_groups' ? 'all_groups' : cat.name,
+            name: cat.name,
+            label: cat.name,
+            icon: cat.icon,
+            isSpecial: cat.isSpecial,
+            specialType: cat.specialType,
+          }))}
+          selectedCategoryId={
+            filters.category 
+              ? filters.category 
+              : (categories.find(cat => cat.isSpecial && cat.specialType === 'all_groups') ? 'all_groups' : '')
+          }
+          onCategorySelect={handleCategoryClick}
+          ariaLabel="Group category filters"
+          showArrowsOnMobile={false}
+        />
 
         {/* Groups Grid */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
+          <div 
+            className="flex items-center justify-between"
+            style={{ marginBottom: spacing[4] }}
+          >
+            <h2 
+              style={{
+                fontSize: typography.fontSize.xl,
+                fontWeight: typography.fontWeight.bold,
+                color: colors.text.primary,
+              }}
+            >
               {searchQuery ? `Search results` : 'Groups'}
             </h2>
             {pagination && (
-              <p className="text-sm text-gray-600">
+              <p 
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: colors.text.secondary,
+                }}
+              >
                 {pagination.total || groups.length} {pagination.total === 1 ? 'group' : 'groups'}
               </p>
             )}
@@ -338,7 +342,13 @@ const GroupList = () => {
             />
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+              <div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                style={{
+                  gap: spacing[4],
+                  marginBottom: spacing[6],
+                }}
+              >
                 {groups.filter(group => group && group._id).map((group) => (
                   <GroupCard key={group._id} group={group} />
                 ))}
@@ -346,7 +356,10 @@ const GroupList = () => {
 
               {/* Pagination */}
               {pagination && pagination.pages > 1 && (
-                <div className="flex justify-center items-center gap-2">
+                <div 
+                  className="flex justify-center items-center"
+                  style={{ gap: spacing[2] }}
+                >
                   <Button
                     variant="outline"
                     size="sm"
@@ -356,7 +369,14 @@ const GroupList = () => {
                   >
                     Previous
                   </Button>
-                  <span className="text-sm text-gray-600 px-4">
+                  <span 
+                    style={{
+                      fontSize: typography.fontSize.sm,
+                      color: colors.text.secondary,
+                      paddingLeft: spacing[4],
+                      paddingRight: spacing[4],
+                    }}
+                  >
                     Page {page} of {pagination.pages}
                   </span>
                   <Button

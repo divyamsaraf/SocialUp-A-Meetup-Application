@@ -45,6 +45,13 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Profile redirect middleware (for server-side redirects)
+// This handles redirects for old /profile/:id URLs at the server level
+// Important for SEO, crawlers, and direct cold loads
+// Note: For SPA routes, configure redirects at hosting/CDN level (Vercel, Netlify, nginx, etc.)
+const profileRedirect = require("./middlewares/profileRedirect");
+app.use(profileRedirect);
+
 // API Routes
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
