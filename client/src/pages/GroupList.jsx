@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { groupService } from '../services/group.service';
 import GroupCard from '../components/groups/GroupCard';
 import Loading from '../components/common/Loading';
@@ -46,7 +47,10 @@ const GroupList = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Groups</h1>
+      <div className="mb-2">
+        <h1 className="text-3xl font-bold text-gray-900">Groups for your interests</h1>
+        <p className="text-gray-600">Find communities to learn, build, and meet people who care about what you do.</p>
+      </div>
 
       {error && <ErrorMessage message={error} onClose={() => setError('')} />}
 
@@ -129,8 +133,18 @@ const GroupList = () => {
       )}
 
       {groups.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-600">Your interests could be someone else&apos;s next friendship.</p>
+        <div className="text-center py-12 border border-dashed border-gray-200 rounded-2xl bg-gray-50">
+          <div className="text-3xl mb-3">👥</div>
+          <h3 className="text-lg font-semibold text-gray-900">No groups found</h3>
+          <p className="text-sm text-gray-600 mt-1 mb-4">
+            Your interests could be someone else&apos;s next friendship.
+          </p>
+          <Link
+            to="/groups/create"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+          >
+            Create a group
+          </Link>
         </div>
       )}
     </div>

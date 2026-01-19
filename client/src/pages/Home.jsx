@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { EVENT_CATEGORIES, MESSAGING } from '../utils/constants';
+import { MESSAGING, CATEGORY_CARDS } from '../utils/constants';
 import HeroSection from '../components/home/HeroSection';
 import ValueProps from '../components/home/ValueProps';
+import CategoryGrid from '../components/home/CategoryGrid';
+import HomeEventsPreview from '../components/home/HomeEventsPreview';
+import HowItWorks from '../components/home/HowItWorks';
 
 const Home = () => {
-  const { isAuthenticated } = useAuth();
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -14,22 +14,40 @@ const Home = () => {
 
         <ValueProps items={MESSAGING.valueProps} />
 
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
-            Popular Categories
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {EVENT_CATEGORIES.slice(0, 6).map((category) => (
-              <Link
-                key={category}
-                to={`/events?category=${encodeURIComponent(category)}`}
-                className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-shadow"
-              >
-                <span className="text-gray-700 font-medium">{category}</span>
-              </Link>
-            ))}
+        <section className="mt-14">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Discover by category</h2>
+            <Link to="/events" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              Browse all events
+            </Link>
           </div>
-        </div>
+          <CategoryGrid categories={CATEGORY_CARDS} />
+        </section>
+
+        <HomeEventsPreview />
+
+        <HowItWorks />
+
+        <section className="mt-14 text-center bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+          <h2 className="text-2xl font-bold text-gray-900">Ready to start something?</h2>
+          <p className="text-gray-600 mt-2">
+            Create a group or host an event to bring people together around what you care about.
+          </p>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/groups/create"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700"
+            >
+              Create a group
+            </Link>
+            <Link
+              to="/events/create"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-md border border-blue-600 text-blue-700 font-medium bg-white hover:bg-blue-50"
+            >
+              Host an event
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );
