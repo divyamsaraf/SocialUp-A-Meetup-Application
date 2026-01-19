@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
-const HeroSection = ({ copy }) => {
+const HeroSection = ({ copy, children }) => {
   const { isAuthenticated } = useAuth();
 
   return (
@@ -28,6 +28,7 @@ const HeroSection = ({ copy }) => {
           </Link>
         )}
       </div>
+      {children ? <div className="mt-6">{children}</div> : null}
     </section>
   );
 };

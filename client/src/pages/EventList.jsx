@@ -9,6 +9,7 @@ import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EventsIntroBanner from '../components/events/EventsIntroBanner';
 import { MESSAGING } from '../utils/constants';
+import LocationSelector from '../components/location/LocationSelector';
 
 const EventListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,6 +18,13 @@ const EventListPage = () => {
     eventCategory: searchParams.get('category') || '',
     eventLocationType: searchParams.get('locationType') || '',
     upcoming: searchParams.get('upcoming') === 'true',
+  });
+  const [locationFilters, setLocationFilters] = useState({
+    city: searchParams.get('city') || '',
+    zipCode: searchParams.get('zipCode') || '',
+    lat: searchParams.get('lat') || '',
+    lng: searchParams.get('lng') || '',
+    radiusMiles: searchParams.get('radiusMiles') || '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,6 +40,11 @@ const EventListPage = () => {
       const params = new URLSearchParams({
         q: searchQuery,
         ...filters,
+        ...(locationFilters.city && { city: locationFilters.city }),
+        ...(locationFilters.zipCode && { zipCode: locationFilters.zipCode }),
+        ...(locationFilters.lat && { lat: locationFilters.lat }),
+        ...(locationFilters.lng && { lng: locationFilters.lng }),
+        ...(locationFilters.radiusMiles && { radiusMiles: String(locationFilters.radiusMiles) }),
       });
       setSearchParams(params);
     } catch (err) {
@@ -48,13 +61,21 @@ const EventListPage = () => {
       ...(newFilters.eventCategory && { category: newFilters.eventCategory }),
       ...(newFilters.eventLocationType && { locationType: newFilters.eventLocationType }),
       ...(newFilters.upcoming && { upcoming: 'true' }),
+      ...(locationFilters.city && { city: locationFilters.city }),
+      ...(locationFilters.zipCode && { zipCode: locationFilters.zipCode }),
+      ...(locationFilters.lat && { lat: locationFilters.lat }),
+      ...(locationFilters.lng && { lng: locationFilters.lng }),
+      ...(locationFilters.radiusMiles && { radiusMiles: String(locationFilters.radiusMiles) }),
     });
     setSearchParams(params);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Events</h1>
+      <div className="mb-2">
+        <h1 className="text-3xl font-bold text-gray-900">Events near you</h1>
+        <p className="text-gray-600">Discover what’s happening around you or online.</p>
+      </div>
 
       <EventsIntroBanner
         show={
@@ -67,12 +88,37 @@ const EventListPage = () => {
       />
 
       <div className="mb-6">
+        <LocationSelector
+          className="mb-4"
+          onChange={(loc) => {
+            const next = {
+              city: loc.city || '',
+              zipCode: loc.zipCode || '',
+              lat: loc.lat || '',
+              lng: loc.lng || '',
+              radiusMiles: loc.radiusMiles || '',
+            };
+            setLocationFilters(next);
+            const params = new URLSearchParams({
+              ...(searchQuery && { q: searchQuery }),
+              ...(filters.eventCategory && { category: filters.eventCategory }),
+              ...(filters.eventLocationType && { locationType: filters.eventLocationType }),
+              ...(filters.upcoming && { upcoming: 'true' }),
+              ...(next.city && { city: next.city }),
+              ...(next.zipCode && { zipCode: next.zipCode }),
+              ...(next.lat && { lat: next.lat }),
+              ...(next.lng && { lng: next.lng }),
+              ...(next.radiusMiles && { radiusMiles: String(next.radiusMiles) }),
+            });
+            setSearchParams(params);
+          }}
+        />
         <form onSubmit={handleSearch} className="flex gap-2">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search events..."
+            placeholder="Search events by name, topic, or location"
             className="flex-1 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
           <button

@@ -2,6 +2,11 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
 const EventCard = ({ event }) => {
+  const isOnline = event.eventLocationType === 'online';
+  const city = event.location?.city;
+  const state = event.location?.state;
+  const distanceMiles = event.distanceMiles;
+
   return (
     <Link
       to={`/events/${event._id}`}
@@ -20,11 +25,27 @@ const EventCard = ({ event }) => {
             {event.eventCategory}
           </span>
           <span className="text-sm text-gray-500">
-            {event.eventLocationType === 'online' ? 'Online' : 'In Person'}
+            {isOnline ? '💻 Online' : '📍 In person'}
           </span>
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">{event.title}</h3>
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">{event.description}</p>
+        {!isOnline && (city || state || distanceMiles != null) && (
+          <div className="text-sm text-gray-600 mb-2">
+            {city || state ? (
+              <span>
+                {city || '—'}
+                {state ? `, ${state}` : ''}
+              </span>
+            ) : null}
+            {distanceMiles != null && (
+              <span>
+                {(city || state) ? ' · ' : ''}
+                {distanceMiles} miles away
+              </span>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>{format(new Date(event.dateAndTime), 'MMM d, yyyy h:mm a')}</span>
           <span>{event.attendees?.length || 0} attendees</span>

@@ -5,12 +5,17 @@ import ValueProps from '../components/home/ValueProps';
 import CategoryGrid from '../components/home/CategoryGrid';
 import HomeEventsPreview from '../components/home/HomeEventsPreview';
 import HowItWorks from '../components/home/HowItWorks';
+import LocationSelector from '../components/location/LocationSelector';
 
 const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <HeroSection copy={MESSAGING.hero} />
+        <HeroSection copy={MESSAGING.hero}>
+          <div className="max-w-2xl mx-auto">
+            <LocationSelector />
+          </div>
+        </HeroSection>
 
         <ValueProps items={MESSAGING.valueProps} />
 

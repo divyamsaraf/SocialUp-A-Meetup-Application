@@ -51,4 +51,13 @@ export const eventService = {
     const response = await api.delete(`/events/${id}/rsvp`);
     return response.data;
   },
+
+  getSuggestions: async (q = '', limit = 8) => {
+    const params = new URLSearchParams({
+      q,
+      limit: limit.toString(),
+    });
+    const response = await api.get(`/events/suggestions?${params}`);
+    return response.data;
+  },
 };
