@@ -5,6 +5,7 @@ const authenticate = require("../middlewares/authenticate");
 const { isOwnerOrAdmin } = require("../middlewares/authorize");
 const validate = require("../middlewares/validate");
 const Event = require("../models/event.model");
+const { getEventSuggestions } = require("../controllers/eventSuggestions.controller");
 
 const router = express.Router();
 
@@ -72,6 +73,7 @@ const updateEventValidation = [
 ];
 
 // Public routes
+router.get("/suggestions", getEventSuggestions);
 router.get("/", eventController.getEvents);
 router.get("/search", eventController.searchEvents);
 router.get("/:id", eventController.getEventById);
