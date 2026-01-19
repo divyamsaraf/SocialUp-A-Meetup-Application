@@ -44,9 +44,14 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">
-        Welcome back, {user?.name || user?.username}!
-      </h1>
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Welcome back, {user?.name || user?.username}!
+        </h1>
+        <p className="text-gray-700 mt-1">
+          This is your space to turn interests into real connections.
+        </p>
+      </div>
 
       {error && <ErrorMessage message={error} onClose={() => setError('')} />}
 
@@ -115,7 +120,9 @@ const Dashboard = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Upcoming Events</h2>
           {upcomingEvents.length === 0 ? (
-            <p className="text-gray-500">No upcoming events</p>
+            <p className="text-gray-600">
+              No upcoming events yet — find one that matches your interests.
+            </p>
           ) : (
             <div className="space-y-4">
               {upcomingEvents.map((event) => (

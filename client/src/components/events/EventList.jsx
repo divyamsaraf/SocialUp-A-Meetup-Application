@@ -69,7 +69,9 @@ const EventList = ({ filters = {} }) => {
 
       {events.length === 0 && !loading && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No events found</p>
+          <p className="text-gray-600">
+            No events nearby yet — start one and bring people together around what you love.
+          </p>
         </div>
       )}
     </div>

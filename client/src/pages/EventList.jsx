@@ -7,6 +7,8 @@ import MapComponent from '../components/maps/MapComponent';
 import { eventService } from '../services/event.service';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
+import EventsIntroBanner from '../components/events/EventsIntroBanner';
+import { MESSAGING } from '../utils/constants';
 
 const EventListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -53,6 +55,16 @@ const EventListPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Events</h1>
+
+      <EventsIntroBanner
+        show={
+          !searchQuery &&
+          !filters.eventCategory &&
+          !filters.eventLocationType &&
+          !filters.upcoming
+        }
+        text={MESSAGING.eventsIntro}
+      />
 
       <div className="mb-6">
         <form onSubmit={handleSearch} className="flex gap-2">

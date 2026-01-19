@@ -130,7 +130,7 @@ const GroupList = () => {
 
       {groups.length === 0 && !loading && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No groups found</p>
+          <p className="text-gray-600">Your interests could be someone else&apos;s next friendship.</p>
         </div>
       )}
     </div>
