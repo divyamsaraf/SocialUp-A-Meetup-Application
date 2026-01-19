@@ -1,8 +1,8 @@
 const PopularCities = ({ cities, onSelect }) => {
   return (
-    <div className="mt-3">
+    <div className="mt-2">
       <div className="text-xs font-semibold text-gray-500 mb-2">Popular cities</div>
-      <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:grid-cols-4 md:gap-2 md:overflow-visible">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {cities.map((c) => (
           <button
             key={`${c.city}-${c.state || ''}`}

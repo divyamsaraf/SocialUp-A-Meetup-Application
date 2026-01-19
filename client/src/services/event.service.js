@@ -52,12 +52,12 @@ export const eventService = {
     return response.data;
   },
 
-  getSuggestions: async (q = '', limit = 8) => {
+  getLocationSuggestions: async (q = '', limit = 8) => {
     const params = new URLSearchParams({
       q,
       limit: limit.toString(),
     });
-    const response = await api.get(`/events/suggestions?${params}`);
+    const response = await api.get(`/locations/suggest?${params}`);
     return response.data;
   },
 };

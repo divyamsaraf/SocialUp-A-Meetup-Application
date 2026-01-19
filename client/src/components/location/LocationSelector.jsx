@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { eventService } from '../../services/event.service';
 import PopularCities from './PopularCities';
 
@@ -56,7 +56,7 @@ const LocationSelector = ({
     }
     const handle = setTimeout(async () => {
       try {
-        const res = await eventService.getSuggestions(query.trim(), 8);
+        const res = await eventService.getLocationSuggestions(query.trim(), 8);
         setSuggestions(res.data.suggestions || []);
       } catch {
         setSuggestions([]);
@@ -146,47 +146,41 @@ const LocationSelector = ({
 
   return (
     <div className={className}>
-      {banner ? (
-        <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-          <div className="text-sm text-gray-700">
-            Showing events near <span className="font-semibold text-gray-900">{banner}</span>
+      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📍</span>
+            <div>
+              <div className="text-sm font-semibold text-gray-900">
+                Events near {banner || 'your area'}
+              </div>
+              <div className="text-xs text-gray-600">
+                Type a city or ZIP, or use your location.
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setMode('text')}
-              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={requestGeolocation}
+              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              disabled={status === 'loading'}
             >
-              Change
+              {status === 'loading' ? 'Detecting…' : 'Use my location'}
             </button>
-            <button
-              type="button"
-              onClick={clearLocation}
-              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Clear
-            </button>
+            {banner ? (
+              <button
+                type="button"
+                onClick={clearLocation}
+                className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Clear
+              </button>
+            ) : null}
           </div>
         </div>
-      ) : null}
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-          <div>
-            <div className="text-sm font-semibold text-gray-900">Location</div>
-            <div className="text-sm text-gray-600">Use your location or search by city/ZIP.</div>
-          </div>
-          <button
-            type="button"
-            onClick={requestGeolocation}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            disabled={status === 'loading'}
-          >
-            {status === 'loading' ? 'Detecting…' : 'Use my location'}
-          </button>
-        </div>
-
-        <div className="mt-3">
+        <div className="relative">
           <input
             type="text"
             value={query}
@@ -195,35 +189,34 @@ const LocationSelector = ({
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           {suggestions.length > 0 && (
-            <div className="mt-2 rounded-md border border-gray-200 overflow-hidden">
+            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
               {suggestions.map((s) => {
                 const label = [s.city, s.state].filter(Boolean).join(', ');
+                const detail = s.zipCode || s.zip;
                 return (
                   <button
-                    key={`${s.city}-${s.state || ''}`}
+                    key={`${label}-${detail || ''}`}
                     type="button"
-                    onClick={() => applyTextLocation(label)}
+                    onClick={() =>
+                      applyTextLocation(detail || label)
+                    }
                     className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between"
                   >
-                    <span className="text-gray-900">{label}</span>
-                    <span className="text-xs text-gray-500">{s.count} events</span>
+                    <span className="text-gray-900">{label || detail}</span>
+                    {s.count != null && (
+                      <span className="text-xs text-gray-500">{s.count} events</span>
+                    )}
                   </button>
                 );
               })}
             </div>
           )}
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => applyTextLocation(query)}
-              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Apply
-            </button>
-          </div>
         </div>
 
-        <PopularCities cities={popularCities} onSelect={(c) => applyTextLocation([c.city, c.state].filter(Boolean).join(', '))} />
+        <PopularCities
+          cities={popularCities}
+          onSelect={(c) => applyTextLocation([c.city, c.state].filter(Boolean).join(', '))}
+        />
       </div>
     </div>
   );
