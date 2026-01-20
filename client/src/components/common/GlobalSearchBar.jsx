@@ -220,7 +220,7 @@ const GlobalSearchBar = ({
     // This would typically call your backend API
     // For now, return empty array - implement based on your API
     try {
-      // Example implementation:
+      // TODO: Implement backend API integration for suggestions
       // const api = require('../../services/api').default;
       // const response = await api.get(`/search/suggestions?q=${encodeURIComponent(query)}&scope=${scope}`);
       // return response.data?.suggestions || [];
@@ -391,7 +391,6 @@ const GlobalSearchBar = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
               placeholder={placeholder}
               className="w-full focus:outline-none focus:ring-2"
               style={{

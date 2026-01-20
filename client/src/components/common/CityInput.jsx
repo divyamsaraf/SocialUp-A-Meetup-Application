@@ -43,7 +43,6 @@ const CityInput = forwardRef(({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={onFocus}
         placeholder={placeholder}
         className="w-full focus:outline-none focus:ring-2"
         style={{
@@ -56,6 +55,7 @@ const CityInput = forwardRef(({
         onFocus={(e) => {
           e.target.style.border = `2px solid ${colors.border.focus}`;
           e.target.style.boxShadow = `0 0 0 3px ${colors.primary[100]}`;
+          if (onFocus) onFocus(e);
         }}
         onBlur={(e) => {
           e.target.style.border = `1px solid ${colors.border.default}`;

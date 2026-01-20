@@ -41,12 +41,11 @@ const NotificationBell = () => {
     <div className="relative">
       <button
         onClick={() => setShowPanel(!showPanel)}
-        className="relative focus:outline-none"
+        className="relative focus:outline-none hover:opacity-80"
         style={{
           padding: spacing[2],
           color: colors.text.secondary,
         }}
-        className="hover:opacity-80"
         aria-label="Notifications"
       >
         <svg

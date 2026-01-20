@@ -24,7 +24,7 @@ import { cards } from '../theme';
 import { transitions } from '../theme';
 
 /**
- * Events Page - Meetup-inspired design with dynamic categories and compact event cards
+ * Events Page - SocialUp design with dynamic categories and compact event cards
  * 
  * Features:
  * - Search bar with city autocomplete (auto-clear on focus)

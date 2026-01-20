@@ -7,7 +7,7 @@ import HeroSection from '../components/home/HeroSection';
 import CompactSearchBar from '../components/home/CompactSearchBar';
 import CategoryGrid from '../components/home/CategoryGrid';
 import HomeEventsPreview from '../components/home/HomeEventsPreview';
-import HowMeetupWorks from '../components/home/HowMeetupWorks';
+import HowSocialUpWorks from '../components/home/HowSocialUpWorks';
 import { colors } from '../theme';
 import { typography } from '../theme';
 import { spacing } from '../theme';
@@ -105,7 +105,7 @@ const Home = () => {
           <CategoryGrid categories={CATEGORY_CARDS} />
         </section>
 
-        <HowMeetupWorks />
+        <HowSocialUpWorks />
       </LayoutContainer>
     </div>
   );

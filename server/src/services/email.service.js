@@ -13,7 +13,7 @@ const sendEmail = async (to, subject, html, text = null) => {
       html: html.substring(0, 100) + "...",
     });
 
-    // Example integration with SendGrid (commented out):
+    // TODO: Integrate SendGrid or other email service provider
     // const sgMail = require('@sendgrid/mail');
     // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     // await sgMail.send({

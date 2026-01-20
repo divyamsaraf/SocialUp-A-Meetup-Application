@@ -93,7 +93,7 @@ const Footer = () => {
                 fontSize: typography.fontSize.sm,
               }}
             >
-              Built for community builders, founders, and teams to create meaningful in-person and online meetups.
+              Built for community builders, founders, and teams to create meaningful in-person and online events.
             </p>
           </div>
         </div>

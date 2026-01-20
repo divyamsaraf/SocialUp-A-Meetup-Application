@@ -236,7 +236,7 @@ const Profile = () => {
       if (isOwnProfile && currentUser?._id) {
         try {
           // Fetch all upcoming events and filter client-side
-          // Note: In production, consider adding backend endpoint /users/:id/rsvped-events
+          // TODO: Add backend endpoint /users/:id/rsvped-events for better performance
           const allUpcomingRes = await eventService.getEvents({ upcoming: true }, 1, 100);
           const allUpcoming = allUpcomingRes?.events || [];
           

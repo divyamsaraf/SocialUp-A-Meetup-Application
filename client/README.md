@@ -1,6 +1,6 @@
 # SocialUp Client
 
-React frontend application for SocialUp - A Meetup Clone.
+React frontend application for SocialUp.
 
 ## Setup Instructions
 

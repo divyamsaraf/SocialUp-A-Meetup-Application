@@ -9,7 +9,7 @@ const steps = [
   },
   {
     title: "Join events that fit",
-    description: "Attend online or in-person meetups, workshops, and hangouts.",
+    description: "Attend online or in-person events, workshops, and hangouts.",
   },
   {
     title: "Build real connections",

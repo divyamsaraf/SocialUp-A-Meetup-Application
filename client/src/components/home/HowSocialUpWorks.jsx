@@ -9,7 +9,7 @@ import { transitions } from '../../theme';
 import { buttons } from '../../theme';
 import { cards } from '../../theme';
 
-const HowMeetupWorks = () => {
+const HowSocialUpWorks = () => {
   const steps = [
     {
       icon: '🔍',
@@ -49,7 +49,7 @@ const HowMeetupWorks = () => {
               marginBottom: spacing[2],
             }}
           >
-            How Meetup works
+            How SocialUp works
           </h2>
           <p 
             style={{
@@ -149,4 +149,4 @@ const HowMeetupWorks = () => {
   );
 };
 
-export default HowMeetupWorks;
+export default HowSocialUpWorks;

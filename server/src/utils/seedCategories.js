@@ -53,7 +53,7 @@ const seedCategories = async () => {
 
 // Run if called directly
 if (require.main === module) {
-  const connect = require("../configs/db");
+  const connect = require("../config/db");
   connect()
     .then(() => seedCategories())
     .then(() => process.exit(0))

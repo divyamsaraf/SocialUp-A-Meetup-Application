@@ -1,6 +1,6 @@
-# SocialUp - Meetup Clone
+# SocialUp
 
-A full-stack web application for organizing and discovering local events and meetups.
+A full-stack web application for organizing and discovering local events and gatherings.
 
 ## Features
 
@@ -138,7 +138,7 @@ Frontend will run on http://localhost:3001
 ## Project Structure
 
 ```
-SocialUp-A-Meetup-Application/
+SocialUp/
 ├── server/
 │   ├── src/
 │   │   ├── config/          # Configuration files

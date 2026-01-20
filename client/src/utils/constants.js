@@ -1,4 +1,10 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// API URL configuration
+// In production, set VITE_API_URL environment variable in Vercel
+// For local development, defaults to localhost
+export const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD 
+    ? 'https://your-backend-url.railway.app/api'  // Update with your production backend URL
+    : 'http://localhost:3000/api');
 
 export const EVENT_CATEGORIES = [
   "Tech",
@@ -31,7 +37,7 @@ export const CATEGORY_CARDS = [
   {
     key: "Tech",
     title: "Tech",
-    description: "Meetups for developers, builders, and tech enthusiasts",
+    description: "Events for developers, builders, and tech enthusiasts",
     icon: "💻",
     href: "/events?category=Tech",
   },

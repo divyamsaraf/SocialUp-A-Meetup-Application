@@ -44,47 +44,41 @@ coverage/
 *.pem
 *.key
 
-# Documentation files (phase reports, guides, etc.)
-# Keep these locally, never push to GitHub
-PHASE_*.md
-*_PROGRESS.md
-*_REPORT.md
-*_SUMMARY.md
-*_CHECKLIST.md
-*_GUIDE.md
-*_IMPLEMENTATION.md
-*_FLOW.md
-*_DESIGN.md
-*_UX*.md
-*_AUDIT.md
-*_NOTES.md
-*_PLAN.md
-*_STATUS.md
-*_SYSTEM.md
-ANALYSIS_REPORT.md
-VERIFICATION_REPORT.md
-COMPLETION_SUMMARY.md
-TESTING_CHECKLIST.md
-PHASE_1_IMPLEMENTATION_GUIDE.md
-PHASE_1_PROGRESS.md
-LOCATION_SYSTEM_IMPLEMENTATION.md
-CITY_SEARCH_UX_FLOW.md
-EVENTS_PAGE_REDESIGN.md
-MIGRATION_AND_CUTOFF_PLAN.md
-MONGODB_SETUP.md
-PRODUCTION_DEPLOYMENT_NOTES.md
-PROFILE_ROUTING_AUDIT.md
-PROFILE_ROUTING_FIX_REPORT.md
-TESTING_STATUS.md
-THEME_MIGRATION_STATUS.md
-THEME_SYSTEM.md
-WHY_AND_HOW_API_KEYS_WORK.md
-CRITICAL_FIXES_SUMMARY.md
-COMPREHENSIVE_CODEBASE_AUDIT_REPORT.md
-PHASES_3_6_COMPLETE_SUMMARY.md
-PHASE_3_6_IMPLEMENTATION_REPORT.md
-PHASE_1_CRITICAL_FIXES_REPORT.md
-API_KEYS_SETUP_GUIDE.md
+# Internal Documentation & Reports (keep locally, never push to GitHub)
+INTERNAL_DOCUMENTATION.md
+VALIDATION_README.md
 
-# Documentation folders (keep locally, never push to GitHub)
-docs/
+# Audit & Report Files (keep locally, never push to GitHub)
+*_audit.json
+*_report.json
+*_summary.json
+*_findings.json
+*_map.json
+*_report.txt
+*_list.txt
+*_suggestion.txt
+audit_script.js
+enhanced_audit_script.js
+production_audit.js
+validate.js
+manual_review_list.txt
+production_structure_suggestion.txt
+validation_report.json
+PRODUCTION_AUDIT_REPORT.json
+PRODUCTION_READINESS_REPORT.md
+PRODUCTION_READINESS_AUDIT_SUMMARY.md
+AUDIT_SUMMARY.md
+DEPLOYMENT_SUMMARY.md
+final_cleanup_report.md
+production_transformation_summary.json
+
+# Deployment Documentation (keep locally, never push to GitHub)
+VERCEL_DEPLOYMENT_GUIDE.md
+VERCEL_QUICK_START.md
+*DEPLOYMENT*.md
+
+# All markdown files except public README files
+*.md
+!README.md
+!client/README.md
+!client/src/theme/README.md

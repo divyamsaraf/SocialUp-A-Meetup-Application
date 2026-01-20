@@ -23,7 +23,7 @@ const USER_ROLES = {
   ADMIN: "admin",
 };
 
-// Event Categories (common Meetup categories)
+// Event Categories (common event categories)
 const EVENT_CATEGORIES = [
   "Tech",
   "Business",
