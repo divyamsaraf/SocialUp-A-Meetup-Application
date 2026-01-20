@@ -14,9 +14,31 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration
+// Support multiple origins: Vercel production, Vercel preview, and localhost
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  'http://localhost:3001',
+  'http://localhost:5173', // Vite default dev port
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // In production, log but allow if it's a Vercel preview URL
+        if (env.NODE_ENV === 'production' && origin.includes('vercel.app')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
     credentials: true,
   })
 );
@@ -36,11 +58,20 @@ if (env.NODE_ENV === "development") {
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/images/uploads", express.static(path.join(__dirname, "images", "uploads")));
 
-// Health check endpoint
+// Health check endpoints
+// /health for general health checks
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Server is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// /healthz for Render health checks (required by Render)
+app.get("/healthz", (req, res) => {
+  res.status(200).json({
+    status: "ok",
     timestamp: new Date().toISOString(),
   });
 });

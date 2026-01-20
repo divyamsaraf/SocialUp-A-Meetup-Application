@@ -3,7 +3,7 @@
 // For local development, defaults to localhost
 export const API_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD 
-    ? 'https://your-backend-url.railway.app/api'  // Update with your production backend URL
+    ? 'https://socialup-backend.onrender.com/api'  // Render backend URL
     : 'http://localhost:3000/api');
 
 export const EVENT_CATEGORIES = [
