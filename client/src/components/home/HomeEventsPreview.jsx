@@ -37,11 +37,14 @@ const HomeEventsPreview = ({ onLocationEdit }) => {
       }
       
       const response = await eventService.getEvents(filters, 1, 10);
-      // Response is already processed by eventService to extract data
-      // Should be { events: [], pagination: {} }
       const eventList = response?.events || response?.data?.events || [];
       setEvents(Array.isArray(eventList) ? eventList : []);
     } catch (err) {
+      if (err.response?.status === 401) {
+        setEvents([]);
+        setError('');
+        return;
+      }
       console.error('Error fetching events:', err);
       const errorMessage = err.response?.data?.message || err.message || 'Failed to load events';
       setError(errorMessage);

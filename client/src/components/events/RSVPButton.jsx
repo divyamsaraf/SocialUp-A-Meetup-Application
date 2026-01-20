@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { eventService } from '../../services/event.service';
 import Button from '../ui/Button';
@@ -8,6 +9,8 @@ import { spacing } from '../../theme';
 
 const RSVPButton = ({ event, onRSVPChange }) => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isRSVPd, setIsRSVPd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +27,7 @@ const RSVPButton = ({ event, onRSVPChange }) => {
 
   const handleRSVP = async () => {
     if (!isAuthenticated) {
-      setError('Please login to RSVP');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 
@@ -52,7 +55,7 @@ const RSVPButton = ({ event, onRSVPChange }) => {
   if (!isAuthenticated) {
     return (
       <Button
-        disabled
+        onClick={() => navigate('/login', { state: { from: location.pathname } })}
         fullWidth
         variant="secondary"
       >

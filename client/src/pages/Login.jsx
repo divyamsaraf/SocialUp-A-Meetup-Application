@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -15,6 +15,7 @@ import { inputs } from '../theme';
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const {
@@ -29,7 +30,9 @@ const Login = () => {
     try {
       const result = await login(data.email, data.password);
       if (result.success) {
-        navigate('/dashboard');
+        // Redirect to the page user came from, or dashboard as fallback
+        const from = location.state?.from || '/dashboard';
+        navigate(from, { replace: true });
       } else {
         setError(result.error || 'Login failed');
       }

@@ -2,7 +2,6 @@ import api from './api';
 
 export const eventService = {
   getEvents: async (filters = {}, page = 1, limit = 20) => {
-    // Filter out empty/undefined/null values and convert to strings
     const cleanFilters = Object.fromEntries(
       Object.entries(filters)
         .filter(([_, v]) => v !== undefined && v !== null && v !== '')
@@ -17,7 +16,6 @@ export const eventService = {
     
     try {
       const response = await api.get(`/events?${params}`);
-      // Backend returns { status: "success", data: { events, pagination } }
       return response.data.data || response.data;
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -26,7 +24,6 @@ export const eventService = {
   },
 
   searchEvents: async (query, filters = {}, page = 1, limit = 20) => {
-    // Filter out empty/undefined/null values and convert to strings
     const cleanFilters = Object.fromEntries(
       Object.entries(filters)
         .filter(([_, v]) => v !== undefined && v !== null && v !== '')
@@ -42,7 +39,6 @@ export const eventService = {
     
     try {
       const response = await api.get(`/events/search?${params}`);
-      // Backend returns { status: "success", data: { events, pagination } }
       return response.data.data || response.data;
     } catch (error) {
       console.error('Error searching events:', error);

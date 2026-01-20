@@ -60,7 +60,7 @@ const EventFiltersRow = ({
       defaultValue: '',
       options: [
         { value: 'online', label: 'Online' },
-        { value: 'in-person', label: 'In Person' },
+        { value: 'in-person', label: 'In-Person' },
       ],
     },
     {

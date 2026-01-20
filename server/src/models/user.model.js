@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
       select: false, // Don't return password by default
     },
     name: { type: String, trim: true },
+    professionalTitle: { type: String, trim: true, maxlength: [100, "Professional title must be less than 100 characters"] },
     location: { type: String, trim: true },
     interests: { 
       type: [String], 

@@ -1,6 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const eventController = require("../controllers/event.controller");
+const commentController = require("../controllers/comment.controller");
 const authenticate = require("../middlewares/authenticate");
 const { isOwnerOrAdmin } = require("../middlewares/authorize");
 const validate = require("../middlewares/validate");
@@ -76,10 +77,24 @@ const updateEventValidation = [
 router.get("/suggestions", getEventSuggestions);
 router.get("/", eventController.getEvents);
 router.get("/search", eventController.searchEvents);
+router.get("/:id/comments", commentController.getEventComments);
 router.get("/:id", eventController.getEventById);
 
 // Protected routes (require authentication)
 router.use(authenticate);
+
+router.post("/:id/comments", 
+  body("text")
+    .trim()
+    .notEmpty()
+    .withMessage("Comment text is required")
+    .isLength({ max: 1000 })
+    .withMessage("Comment must be less than 1000 characters"),
+  validate,
+  commentController.addComment
+);
+
+router.delete("/:id/comments/:commentId", commentController.deleteComment);
 
 router.post("/", createEventValidation, eventController.createEvent);
 

@@ -26,10 +26,18 @@ const CommentSection = ({ eventId }) => {
   const fetchComments = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await commentService.getEventComments(eventId);
-      setComments(response.data.comments || []);
+      const commentsData = response?.data?.comments || response?.comments || [];
+      setComments(Array.isArray(commentsData) ? commentsData : []);
     } catch (err) {
-      setError('Failed to load comments');
+      // Don't show error for 401 - comments are viewable without login
+      if (err.response?.status === 401) {
+        setComments([]);
+        setError('');
+      } else {
+        setError('Failed to load comments');
+      }
     } finally {
       setLoading(false);
     }

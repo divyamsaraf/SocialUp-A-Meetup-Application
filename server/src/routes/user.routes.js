@@ -13,6 +13,11 @@ const updateProfileValidation = [
     .trim()
     .isLength({ min: 2 })
     .withMessage("Name must be at least 2 characters"),
+  body("professionalTitle")
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage("Professional title must be less than 100 characters"),
   body("bio")
     .optional()
     .trim()

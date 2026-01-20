@@ -16,6 +16,7 @@ import { spacing } from '../theme';
 import { borderRadius } from '../theme';
 import { shadows } from '../theme';
 import { icons } from '../theme';
+import { transitions } from '../theme';
 
 /**
  * Profile Page - Modern design with edit functionality and comprehensive event lists
@@ -390,24 +391,27 @@ const Profile = () => {
             marginBottom: spacing[6],
           }}
         >
+          {/* Top gradient banner */}
           <div 
             className="bg-gradient-to-r"
             style={{
               background: `linear-gradient(to right, ${colors.primary[500]}, ${colors.primary[600]})`,
-              height: '8rem',
+              height: '7rem',
             }}
           />
+          {/* Content sits fully on white for better readability */}
           <div 
             style={{
-              paddingLeft: spacing[6],
-              paddingRight: spacing[6],
+              paddingLeft: spacing[4],
+              paddingRight: spacing[4],
               paddingBottom: spacing[6],
-              marginTop: '-4rem',
+              paddingTop: spacing[5],
             }}
+            className="sm:px-6"
           >
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6">
               {/* Profile Picture */}
-              <div className="relative">
+              <div className="relative flex-shrink-0 -mt-12 sm:-mt-16">
                 <img
                   src={user.profile_pic || '/default-avatar.png'}
                   alt={user.name || user.username || 'User'}
@@ -422,48 +426,76 @@ const Profile = () => {
               </div>
               
               {/* User Info */}
-              <div className="flex-1">
-                <h1 
-                  style={{
-                    fontSize: typography.fontSize['3xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    color: colors.text.primary,
-                    marginBottom: spacing[1],
-                  }}
-                >
-                  {user.name || user.username || 'User'}
-                </h1>
+              <div className="flex-1 w-full sm:min-w-0" style={{ minWidth: 0 }}>
+                {/* Name and Professional Title */}
+                <div style={{ marginBottom: spacing[2] }}>
+                  <h1 
+                    className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2"
+                    style={{
+                      fontSize: typography.fontSize['2xl'],
+                      fontWeight: typography.fontWeight.bold,
+                      color: colors.text.primary,
+                      marginBottom: spacing[1],
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    <span>{user.name || user.username || 'User'}</span>
+                    {user.professionalTitle && (
+                      <span 
+                        className="text-lg sm:text-xl"
+                        style={{
+                          fontSize: typography.fontSize.lg,
+                          fontWeight: typography.fontWeight.normal,
+                          color: colors.text.secondary,
+                        }}
+                      >
+                        | {user.professionalTitle}
+                      </span>
+                    )}
+                  </h1>
+                </div>
+
+                {/* Bio */}
                 {user.bio && (
                   <p 
                     style={{
-                      color: colors.text.secondary,
-                      marginBottom: spacing[3],
+                      color: colors.text.primary, // strong contrast
+                      marginBottom: spacing[4],
                       fontSize: typography.fontSize.base,
+                      lineHeight: 1.6,
+                      maxWidth: '42rem',
                     }}
                   >
                     {user.bio}
                   </p>
                 )}
                 
-                {/* User Details */}
+                {/* User Details - Location and Email */}
                 <div 
-                  className="flex flex-wrap mb-4"
+                  className="flex flex-wrap"
                   style={{
                     gap: spacing[4],
+                    marginBottom: spacing[4],
                     fontSize: typography.fontSize.sm,
                     color: colors.text.secondary,
                   }}
                 >
                   {user.location && (
-                    <div className="flex items-center" style={{ gap: spacing[1] }}>
+                    <div 
+                      className="flex items-center" 
+                      style={{ gap: spacing[1] }}
+                      title={`Location: ${user.location}`}
+                    >
                       <svg 
                         style={{
                           width: icons.size.sm,
                           height: icons.size.sm,
+                          flexShrink: 0,
                         }}
                         fill="none" 
                         stroke="currentColor" 
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -471,16 +503,22 @@ const Profile = () => {
                       <span>{user.location}</span>
                     </div>
                   )}
-                  {user.email && isOwnProfile && (
-                    <div className="flex items-center" style={{ gap: spacing[1] }}>
+                  {user.email && (
+                    <div 
+                      className="flex items-center" 
+                      style={{ gap: spacing[1] }}
+                      title={`Email: ${user.email}`}
+                    >
                       <svg 
                         style={{
                           width: icons.size.sm,
                           height: icons.size.sm,
+                          flexShrink: 0,
                         }}
                         fill="none" 
                         stroke="currentColor" 
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
@@ -489,22 +527,57 @@ const Profile = () => {
                   )}
                 </div>
 
-                {/* Interests */}
+                {/* Interests - Clickable Tags */}
                 {user.interests && user.interests.length > 0 && (
-                  <div className="flex flex-wrap" style={{ gap: spacing[2] }}>
+                  <div 
+                    className="flex flex-wrap" 
+                    style={{ gap: spacing[2] }}
+                    role="list"
+                    aria-label="User interests"
+                  >
                     {user.interests.map((interest, index) => (
-                      <span
+                      <Link
                         key={index}
-                        className="rounded-full font-medium"
+                        to={`/events?category=${encodeURIComponent(interest)}`}
+                        className="rounded-full font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2"
                         style={{
                           backgroundColor: colors.primary[100],
                           color: colors.primary[800],
                           padding: `${spacing[1]} ${spacing[3]}`,
                           fontSize: typography.fontSize.sm,
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                          transition: transitions.preset.default,
+                          border: `1px solid transparent`,
                         }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = colors.primary[200];
+                          e.target.style.color = colors.primary[900];
+                          e.target.style.transform = 'translateY(-1px)';
+                          e.target.style.boxShadow = shadows.sm;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = colors.primary[100];
+                          e.target.style.color = colors.primary[800];
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.backgroundColor = colors.primary[200];
+                          e.target.style.color = colors.primary[900];
+                          e.target.style.outline = `2px solid ${colors.primary[500]}`;
+                          e.target.style.outlineOffset = '2px';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.backgroundColor = colors.primary[100];
+                          e.target.style.color = colors.primary[800];
+                          e.target.style.outline = 'none';
+                        }}
+                        role="listitem"
+                        aria-label={`View events in ${interest}`}
                       >
                         {interest}
-                      </span>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -512,23 +585,26 @@ const Profile = () => {
 
               {/* Edit Button */}
               {isOwnProfile && (
-                <Link to={`/profile/${username}/edit`}>
-                  <Button variant="secondary" size="sm">
-                    <svg 
-                      className="mr-2"
-                      style={{
-                        width: icons.size.sm,
-                        height: icons.size.sm,
-                      }}
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Edit Profile
-                  </Button>
-                </Link>
+                <div className="w-full sm:w-auto mt-4 sm:mt-0">
+                  <Link to={`/profile/${username}/edit`} className="block">
+                    <Button variant="secondary" size="sm" className="w-full sm:w-auto">
+                      <svg 
+                        className="mr-2"
+                        style={{
+                          width: icons.size.sm,
+                          height: icons.size.sm,
+                        }}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={icons.strokeWidth.normal} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                      Edit Profile
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
           </div>

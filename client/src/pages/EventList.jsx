@@ -80,23 +80,19 @@ const EventListPage = () => {
       if (categoriesData.length > 0) {
         setCategories(categoriesData);
       } else {
-        // If API returns empty array, use fallback
         setCategories(getDefaultCategories());
       }
     } catch (err) {
       console.error('Failed to load categories:', err);
-      // Fallback to default categories if API fails
       setCategories(getDefaultCategories());
     }
   };
 
-  // Define fetchEvents BEFORE useEffect that uses it
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       
-      // Build location filters inline to avoid dependency issues
       const locationFilters = {};
       if (selectedLocation) {
         if (selectedLocation.lat && selectedLocation.lng) {
@@ -129,7 +125,6 @@ const EventListPage = () => {
           break;
       }
       
-      // Build filters object, removing empty values
       const combinedFilters = {
         ...(filters.eventCategory && { eventCategory: filters.eventCategory }),
         ...(filters.eventLocationType && { eventLocationType: filters.eventLocationType }),
@@ -153,15 +148,18 @@ const EventListPage = () => {
         eventList = [];
       }
       
-      // Apply date filter client-side if needed
       if (dateFilter) {
         eventList = eventList.filter(event => {
           const eventDate = new Date(event.dateAndTime);
           return eventDate >= dateFilter.start && eventDate < dateFilter.end;
         });
       }
+      if (filters.eventLocationType) {
+        eventList = eventList.filter(
+          (event) => event?.eventLocationType === filters.eventLocationType
+        );
+      }
       
-      // Apply sorting inline
       const sorted = [...eventList];
       switch (filters.sortBy) {
         case 'popularity':
@@ -186,14 +184,14 @@ const EventListPage = () => {
       setEvents(eventList);
       setPagination(response?.pagination || response?.data?.pagination || { page, limit: 20, total: eventList.length, pages: 1 });
     } catch (err) {
-      console.error('Error fetching events:', err);
-      console.error('Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      });
+      if (err.response?.status === 401) {
+        setEvents([]);
+        setError('');
+        setPagination(null);
+        return;
+      }
       
-      // More specific error messages
+      console.error('Error fetching events:', err);
       let errorMessage = 'Failed to load events';
       if (err.response?.status === 404) {
         errorMessage = 'Events endpoint not found. Please check your API configuration.';
@@ -222,25 +220,18 @@ const EventListPage = () => {
     page
   ]);
 
-  // Fetch categories on mount
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // Fetch events when filters/search change (wait for location to load)
   useEffect(() => {
-    // Wait for location context to finish loading before fetching events
     if (!locationContextLoading && selectedLocation !== null) {
       fetchEvents();
     }
   }, [fetchEvents, locationContextLoading, selectedLocation]);
 
-  // Handle search from GlobalSearchBar
   const handleGlobalSearch = (data) => {
-    // Update search query from GlobalSearchBar
     setSearchQuery(data.query || '');
-    
-    // Update URL params
     setPage(1);
     const params = new URLSearchParams();
     if (data.query) params.set('q', data.query);
@@ -253,7 +244,6 @@ const EventListPage = () => {
     setSearchParams(params);
   };
 
-  // Handle filter change
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -270,17 +260,13 @@ const EventListPage = () => {
     setSearchParams(params);
   };
 
-  // Handle category click
   const handleCategoryClick = (category) => {
     if (category.isSpecial) {
-      // Handle special categories
       if (category.specialType === 'all_events') {
         handleFilterChange('eventCategory', '');
       } else if (category.specialType === 'events_near') {
-        // Already showing events near location
         handleFilterChange('eventCategory', '');
       } else if (category.specialType === 'new_groups') {
-        // Could navigate to groups page or filter by new groups
         handleFilterChange('eventCategory', '');
       }
     } else {
@@ -288,9 +274,7 @@ const EventListPage = () => {
     }
   };
 
-  // Clear all filters
   const clearFilters = () => {
-    // Announce reset to screen readers
     const announcement = document.createElement('div');
     announcement.setAttribute('role', 'status');
     announcement.setAttribute('aria-live', 'polite');
@@ -332,7 +316,6 @@ const EventListPage = () => {
     );
   }
 
-  // Ensure we have a valid selectedLocation before rendering
   const safeLocation = selectedLocation || {
     city: 'Seattle',
     state: 'WA',
@@ -391,7 +374,6 @@ const EventListPage = () => {
           showDistance={!!(selectedLocation?.lat && selectedLocation?.lng)}
         />
 
-        {/* Category Row - Dynamic, scrollable categories with arrows */}
         <CategoryRow
           categories={categories.map(cat => ({
             id: cat.isSpecial && cat.specialType === 'all_events' ? 'all_events' : cat.name,
@@ -446,7 +428,11 @@ const EventListPage = () => {
             <EmptyState
               icon="🗓️"
               title="No events found"
-              message="Try adjusting your filters or search to find more events."
+              message={
+                filters.eventLocationType 
+                  ? `No ${filters.eventLocationType === 'online' ? 'online' : 'in-person'} events found for this filter. Try adjusting your filters or search to find more events.`
+                  : "No events found for this filter. Try adjusting your filters or search to find more events."
+              }
               actionLabel="Clear filters"
               onAction={clearFilters}
             />
@@ -464,7 +450,6 @@ const EventListPage = () => {
                 ))}
               </div>
 
-              {/* Pagination */}
               {pagination && pagination.pages > 1 && (
                 <div 
                   className="flex justify-center items-center"

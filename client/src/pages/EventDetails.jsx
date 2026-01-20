@@ -36,7 +36,13 @@ const EventDetails = () => {
       setLoading(true);
       setError('');
       const response = await eventService.getEventById(id);
-      setEvent(response.data.event);
+      const eventData =
+        response?.data?.event ||
+        response?.data?.data?.event ||
+        response?.event ||
+        response?.data ||
+        null;
+      setEvent(eventData);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load event');
     } finally {
@@ -53,7 +59,9 @@ const EventDetails = () => {
           4
         );
         setSimilarEvents(
-          response.data.events?.filter((e) => e._id !== id).slice(0, 3) || []
+          (response?.events || response?.data?.events || [])
+            .filter((e) => e && e._id !== id)
+            .slice(0, 3)
         );
       }
     } catch (err) {

@@ -37,6 +37,7 @@ const EditProfile = () => {
   useEffect(() => {
     if (user) {
       setValue('name', user.name || '');
+      setValue('professionalTitle', user.professionalTitle || '');
       setValue('bio', user.bio || '');
       setValue('location', user.location || '');
       setValue('interests', user.interests || []);
@@ -64,6 +65,7 @@ const EditProfile = () => {
     try {
       const profileData = {
         name: data.name,
+        professionalTitle: data.professionalTitle || '',
         bio: data.bio,
         location: data.location,
         interests: data.interests || [],
@@ -208,6 +210,52 @@ const EditProfile = () => {
                         }}
                       >
                         {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label 
+                      className="block mb-1"
+                      style={{
+                        fontSize: typography.fontSize.sm,
+                        fontWeight: typography.fontWeight.medium,
+                        color: colors.text.secondary,
+                      }}
+                    >
+                      Professional Title
+                    </label>
+                    <input
+                      {...register('professionalTitle', {
+                        maxLength: { value: 100, message: 'Professional title must be less than 100 characters' },
+                      })}
+                      type="text"
+                      className="w-full focus:outline-none focus:ring-2"
+                      style={{
+                        ...inputs.base,
+                        ...inputs.size.md,
+                        ...inputs.state.default,
+                        borderRadius: borderRadius.lg,
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.border = `2px solid ${colors.border.focus}`;
+                        e.target.style.boxShadow = `0 0 0 3px ${colors.primary[100]}`;
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.border = `1px solid ${colors.border.default}`;
+                        e.target.style.boxShadow = 'none';
+                      }}
+                      placeholder="e.g., Software Engineer, Product Manager"
+                    />
+                    {errors.professionalTitle && (
+                      <p 
+                        className="mt-1"
+                        style={{
+                          fontSize: typography.fontSize.sm,
+                          color: colors.error[600],
+                        }}
+                      >
+                        {errors.professionalTitle.message}
                       </p>
                     )}
                   </div>
